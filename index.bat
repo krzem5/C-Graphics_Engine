@@ -18,6 +18,7 @@ del *.pdb
 del *.exp
 del *.ilk
 del *.idb
+xcopy ..\rsrc .\rsrc /SEYI
 cls
 g_engine.exe
 :end
