@@ -5,15 +5,9 @@
 
 
 struct VertexShaderInput{
-	Matrix wm;
-	Matrix vm;
-	Matrix pm;
-	uint8_t lc;
-	uint8_t _[7];
-	struct VertexShaderInputLight{
-		Vector p;
-		Vector c;
-	} ll[8];
+	RawMatrix wm;
+	RawMatrix cm;
+	RawMatrix pm;
 };
 
 
@@ -29,20 +23,11 @@ VS_INPUT_LAYOUT vs_inp[]={
 		0
 	},
 	{
-		"TEXCOORD",
+		"COLOR",
 		0,
-		DXGI_FORMAT_R32G32_FLOAT,
+		DXGI_FORMAT_R32G32B32A32_FLOAT,
 		0,
 		12,
-		D3D11_INPUT_PER_VERTEX_DATA,
-		0
-	},
-	{
-		"NORMAL",
-		0,
-		DXGI_FORMAT_R32G32B32_FLOAT,
-		0,
-		20,
 		D3D11_INPUT_PER_VERTEX_DATA,
 		0
 	}
@@ -64,25 +49,50 @@ struct SHADER_DATA sdt[1]={
 VertexShader vs;
 PixelShader ps;
 ConstantBuffer cb;
+Matrix wm;
 Matrix pm;
+Camera c;
+ObjectBuffer ob;
 
 
 
 void init(void){
-	vs=GEngine_load_vertex_shader(L"rsrc/phong.hlsl","vertex_shader","vs_4_0",vs_inp,3);
+	vs=GEngine_load_vertex_shader(L"rsrc/phong.hlsl","vertex_shader","vs_4_0",vs_inp,2);
 	ps=GEngine_load_pixel_shader(L"rsrc/phong.hlsl","pixel_shader","ps_4_0");
 	cb=GEngine_create_constant_buffer(sizeof(struct VertexShaderInput));
 	sdt->id=cb;
+	c=GEngine_create_camera(5,5,0,5,0,-90,0,0);
+	c->lock=true;
+	c->enabled=true;
 	GEngine_set_shader_data(sdt);
-	pm=GEngine_perspective_fov_matrix(GENGINE_PIDIV4,GEngine_aspect_ratio(),0.01f,1000);
+	wm=GEngine_identity_matrix();
+	pm=GEngine_perspective_fov_matrix(GENGINE_PIDIV2,GEngine_aspect_ratio(),0.01f,1000);
+	ob=GEngine_box_object_buffer();
 }
 
 
 
 void render(double dt){
 	static double t=0;
-	t+=dt;
-	GEngine_set_color((float)(((uint8_t)(t/10))%255)/255,0,0,255);
+	t+=dt*1e-6;
+	Matrix cm=GEngine_update_camera(c,(float)(dt*1e-6));
+	GEngine_set_color(0,0,0,255);
+	if (cm==NULL){
+		return;
+	}
+	wm=GEngine_y_rotation_matrix((float)(t/1000));
+	struct VertexShaderInput cb1={
+		GEngine_as_raw_matrix(wm),
+		GEngine_as_raw_matrix(cm),
+		GEngine_as_raw_matrix(pm)
+	};
+	// printf("%i:\n",__LINE__);for (size_t i=0;i<sizeof(RawMatrix);i+=sizeof(float)){printf("  Matrix._%llu%llu=%f\n",(i/sizeof(float))/4,(i/sizeof(float))%4,*((float*)((unsigned char*)(&cb1.wm)+i)));}
+	printf("%i:\n",__LINE__);for (size_t i=0;i<sizeof(RawMatrix);i+=sizeof(float)){printf("  Matrix._%llu%llu=%f\n",(i/sizeof(float))/4,(i/sizeof(float))%4,*((float*)((unsigned char*)cm+i)));}
+	// printf("%i:\n",__LINE__);for (size_t i=0;i<sizeof(RawMatrix);i+=sizeof(float)){printf("  Matrix._%llu%llu=%f\n",(i/sizeof(float))/4,(i/sizeof(float))%4,*((float*)((unsigned char*)pm+i)));}
+	GEngine_update_constant_buffer(cb,&cb1);
+	GEngine_use_vertex_shader(vs);
+	GEngine_use_pixel_shader(ps);
+	GEngine_draw_object_buffer(ob);
 	if (GEngine_is_pressed(0x1b)==true){
 		GEngine_close();
 	}
