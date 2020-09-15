@@ -157,14 +157,14 @@ Matrix GEngine_look_at_matrix(float ex,float ey,float ez,float dx,float dy,float
 	dz/=dm;
 	ey=-ey;
 	float xx=uy*dz-uz*dy;
-	float xy=ux*dz-uz*dx;
+	float xy=ux*dx-ux*dz;
 	float xz=ux*dy-uy*dx;
 	float xm=sqrtf(xx*xx+xy*xy+xz*xz);
 	xx/=xm;
 	xy/=xm;
 	xz/=xm;
 	float yx=xy*dz-xz*dy;
-	float yy=xx*dz-xz*dx;
+	float yy=xz*dx-xx*dz;
 	float yz=xx*dy-xy*dx;
 	Matrix o=malloc(sizeof(struct _MATRIX));
 	o->_00=xx;
@@ -513,6 +513,7 @@ void GEngine_create(const wchar_t* nm){
 			}
 			IDXGIFactory2* dxgi_f2=NULL;
 			hr=IDXGIFactory1_QueryInterface(dxgi_f,&IID_IDXGIFactory2,(void**)&dxgi_f2);
+			assert(hr==S_OK);
 			if (dxgi_f2!=NULL){
 				hr=ID3D11Device_QueryInterface(_d3_d,&IID_ID3D11Device1,(void**)&_d3_d1);
 				if (SUCCEEDED(hr)){

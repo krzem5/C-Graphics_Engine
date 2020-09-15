@@ -86,9 +86,6 @@ void render(double dt){
 		GEngine_as_raw_matrix(cm),
 		GEngine_as_raw_matrix(pm)
 	};
-	// printf("%i:\n",__LINE__);for (size_t i=0;i<sizeof(RawMatrix);i+=sizeof(float)){printf("  Matrix._%llu%llu=%f\n",(i/sizeof(float))/4,(i/sizeof(float))%4,*((float*)((unsigned char*)(&cb1.wm)+i)));}
-	printf("%i:\n",__LINE__);for (size_t i=0;i<sizeof(RawMatrix);i+=sizeof(float)){printf("  Matrix._%llu%llu=%f\n",(i/sizeof(float))/4,(i/sizeof(float))%4,*((float*)((unsigned char*)cm+i)));}
-	// printf("%i:\n",__LINE__);for (size_t i=0;i<sizeof(RawMatrix);i+=sizeof(float)){printf("  Matrix._%llu%llu=%f\n",(i/sizeof(float))/4,(i/sizeof(float))%4,*((float*)((unsigned char*)pm+i)));}
 	GEngine_update_constant_buffer(cb,&cb1);
 	GEngine_use_vertex_shader(vs);
 	GEngine_use_pixel_shader(ps);
