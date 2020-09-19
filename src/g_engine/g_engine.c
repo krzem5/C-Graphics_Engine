@@ -37,6 +37,45 @@ uint8_t* _cblp=NULL;
 uint32_t _vsll=0;
 uint32_t _psll=0;
 uint32_t _cbll=0;
+uint8_t _le=UCHAR_MAX;
+
+
+
+float _float(float v){
+	if (_le==UCHAR_MAX){
+		uint16_t a=1;
+		_le=(*((uint8_t*)(&a))==1?1:0);
+	}
+	if (_le==0){
+		return v;
+	}
+	float o=0;
+	uint8_t* op=(uint8_t*)&o;
+	uint8_t* vp=(uint8_t*)&v;
+	*op=*(vp+3);
+	*(op+1)=*(vp+2);
+	*(op+2)=*(vp+1);
+	*(op+3)=*vp;
+	return o;
+}
+
+
+
+uint16_t _uint16_t(uint16_t v){
+	if (_le==UCHAR_MAX){
+		uint16_t a=1;
+		_le=(*((uint8_t*)(&a))==1?1:0);
+	}
+	if (_le==0){
+		return v;
+	}
+	uint16_t o=0;
+	uint8_t* op=(uint8_t*)&o;
+	uint8_t* vp=(uint8_t*)&v;
+	*op=*(vp+1);
+	*(op+1)=*vp;
+	return o;
+}
 
 
 
@@ -54,6 +93,151 @@ LRESULT CALLBACK _msg_cb(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
 			return 0;
 	}
 	return DefWindowProc(hwnd,msg,wp,lp);
+}
+
+
+
+struct _MODEL_BONE _load_model_bone(FILE* f){
+	struct _MODEL_BONE o;
+	o.nml=getc(f);
+	o.nm=malloc(o.nml*sizeof(char));
+	assert(fread_s((void*)o.nm,o.nml*sizeof(char),1,o.nml*sizeof(char),f)==o.nml*sizeof(char));
+	assert(fread_s((void*)(&o.l),sizeof(float),1,sizeof(float),f)==sizeof(float));
+	o.l=_float(o.l);
+	o.cl=getc(f);
+	o.d=malloc(6*sizeof(float));
+	assert(fread_s((void*)o.d,6*sizeof(float),1,6*sizeof(float),f)==6*sizeof(float));
+	for (uint8_t i=0;i<6;i++){
+		*(o.d+i)=_float(*(o.d+i))*(i>=3?GENGINE_PIDIV180:1);
+	}
+	o.tm=malloc(16*sizeof(float));
+	assert(fread_s((void*)o.tm,16*sizeof(float),1,16*sizeof(float),f)==16*sizeof(float));
+	for (uint8_t i=0;i<16;i++){
+		*(o.tm+i)=_float(*(o.tm+i));
+	}
+	o.dt=malloc(16*sizeof(float));
+	assert(fread_s((void*)o.dt,16*sizeof(float),1,16*sizeof(float),f)==16*sizeof(float));
+	for (uint8_t i=0;i<16;i++){
+		*(o.dt+i)=_float(*(o.dt+i));
+	}
+	o.wil=(((uint32_t)getc(f))<<24)|(((uint32_t)getc(f))<<16)|(((uint32_t)getc(f))<<8)|((uint32_t)getc(f));
+	o.il=malloc(o.wil*sizeof(uint16_t));
+	o.wl=malloc(o.wil*sizeof(float));
+	assert(fread_s((void*)o.il,o.wil*sizeof(uint16_t),1,o.wil*sizeof(uint16_t),f)==o.wil*sizeof(uint16_t));
+	assert(fread_s((void*)o.wl,o.wil*sizeof(float),1,o.wil*sizeof(float),f)==o.wil*sizeof(float));
+	for (uint32_t i=0;i<o.wil;i++){
+		*(o.il+i)=_uint16_t(*(o.il+i));
+		*(o.wl+i)=_float(*(o.wl+i));
+	}
+	o.c=malloc(o.cl*sizeof(struct _MODEL_BONE));
+	for (uint8_t i=0;i<o.cl;i++){
+		*(o.c+i)=_load_model_bone(f);
+	}
+	return o;
+}
+
+
+
+float _mult_mat_x(float* m,float x,float y,float z){
+	//  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
+	// 00 01 02 03 10 11 12 13 20 21 22 23 30 31 32 33
+	//
+	// 00 01 02 03
+	// 10 11 12 13
+	// 20 21 22 23
+	// 30 31 31 33
+	//
+	// 00*x+01*y+02*z+03
+	return (*m)*x+(*(m+1))*y+(*(m+2))*z+(*(m+3));
+}
+
+
+
+float _mult_mat_y(float* m,float x,float y,float z){
+	//  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
+	// 00 01 02 03 10 11 12 13 20 21 22 23 30 31 32 33
+	//
+	// 00 01 02 03
+	// 10 11 12 13
+	// 20 21 22 23
+	// 30 31 31 33
+	//
+	// 10*x+11*y+12*z+13
+	return (*(m+4))*x+(*(m+5))*y+(*(m+6))*z+(*(m+7));
+}
+
+
+
+float _mult_mat_z(float* m,float x,float y,float z){
+	//  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
+	// 00 01 02 03 10 11 12 13 20 21 22 23 30 31 32 33
+	//
+	// 00 01 02 03
+	// 10 11 12 13
+	// 20 21 22 23
+	// 30 31 31 33
+	//
+	// 20*x+21*y+22*z+23
+	return (*(m+8))*x+(*(m+9))*y+(*(m+10))*z+(*(m+11));
+}
+
+
+
+void _draw_model_bones(struct _MODEL_BONE* b,float* t,uint32_t* vll,float** vl,uint32_t* ill,uint16_t** il){
+	float* nt=memcpy(malloc(6*sizeof(float)),t,6*sizeof(float));
+	for (uint8_t i=3;i<6;i++){
+		*(nt+i)+=*(b->d+i);
+	}
+	if (b->l!=0){
+		(*vll)+=21;
+		(*ill)+=6;
+		*vl=realloc(*vl,(*vll)*sizeof(float));
+		*il=realloc(*il,(*ill)*sizeof(uint16_t));
+		float rx=sinf(*(nt+3))*cosf(*(nt+4));
+		float ry=cosf(*(nt+3));
+		float rz=sinf(*(nt+3))*sinf(*(nt+4));
+		float rm=sqrtf(rx*rx+ry*ry+rz*rz);
+		rx/=rm;
+		ry/=rm;
+		rz/=rm;
+		float prx=-ry/3;
+		float pry=rx/3;
+		float prz=rz/3;
+		*(*vl+*vll-21)=*nt+_mult_mat_x(b->tm,prx,pry,prz);
+		*(*vl+*vll-20)=*(nt+1)+_mult_mat_y(b->tm,prx,pry,prz);
+		*(*vl+*vll-19)=*(nt+2)+_mult_mat_z(b->tm,prx,pry,prz);
+		*(*vl+*vll-18)=0.6f;
+		*(*vl+*vll-17)=0.6f;
+		*(*vl+*vll-16)=0.6f;
+		*(*vl+*vll-15)=1;
+		*(*vl+*vll-14)=*nt+_mult_mat_x(b->tm,-prx,-pry,-prz);
+		*(*vl+*vll-13)=*(nt+1)+_mult_mat_y(b->tm,-prx,-pry,-prz);
+		*(*vl+*vll-12)=*(nt+2)+_mult_mat_z(b->tm,-prx,-pry,-prz);
+		*(*vl+*vll-11)=0.6f;
+		*(*vl+*vll-10)=0.6f;
+		*(*vl+*vll-9)=0.6f;
+		*(*vl+*vll-8)=1;
+		*(*vl+*vll-7)=*nt+_mult_mat_x(b->tm,rx*b->l,ry*b->l,rz*b->l);
+		*(*vl+*vll-6)=*(nt+1)+_mult_mat_y(b->tm,rx*b->l,ry*b->l,rz*b->l);
+		*(*vl+*vll-5)=*(nt+2)+_mult_mat_z(b->tm,rx*b->l,ry*b->l,rz*b->l);
+		*(*vl+*vll-4)=1;
+		*(*vl+*vll-3)=(b->cl>0?1.0f:0.0f);
+		*(*vl+*vll-2)=(b->cl>0?1.0f:0.0f);
+		*(*vl+*vll-1)=1;
+		*(*il+*ill-6)=(uint16_t)(*ill/2-3);
+		*(*il+*ill-5)=(uint16_t)(*ill/2-2);
+		*(*il+*ill-4)=(uint16_t)(*ill/2-1);
+		*(*il+*ill-3)=(uint16_t)(*ill/2-1);
+		*(*il+*ill-2)=(uint16_t)(*ill/2-2);
+		*(*il+*ill-1)=(uint16_t)(*ill/2-3);
+		*nt+=_mult_mat_x(b->tm,rx*b->l,ry*b->l,rz*b->l);
+		*(nt+1)+=_mult_mat_y(b->tm,rx*b->l,ry*b->l,rz*b->l);
+		*(nt+2)+=_mult_mat_z(b->tm,rx*b->l,ry*b->l,rz*b->l);
+	}
+	for (uint8_t i=0;i<b->cl;i++){
+		_draw_model_bones(b->c+i,nt,vll,vl,ill,il);
+	}
+	free(nt);
 }
 
 
@@ -193,9 +377,9 @@ Camera GEngine_create_camera(float ms,float rs,float x,float y,float z,float rx,
 	o->x=x;
 	o->y=y;
 	o->z=z;
-	o->rx=rx;
-	o->ry=ry;
-	o->rz=rz;
+	o->rx=(rx-90)*GENGINE_PIDIV180;
+	o->ry=ry*GENGINE_PIDIV180;
+	o->rz=rz*GENGINE_PIDIV180;
 	o->ms=ms;
 	o->rs=rs;
 	o->lock=false;
@@ -219,8 +403,9 @@ Matrix GEngine_update_camera(Camera c,float dt){
 	}
 	if (c->_fs==false&&c->lock==true){
 		SetCursorPos(_ww/2,_wh/2);
+		c->_fs=true;
+		return NULL;
 	}
-	c->_fs=true;
 	POINT mp;
 	GetCursorPos(&mp);
 	if (c->enabled==true){
@@ -274,13 +459,138 @@ Matrix GEngine_update_camera(Camera c,float dt){
 
 
 
+Model GEngine_load_model(const char* fp){
+	FILE* f=NULL;
+	assert(fopen_s(&f,fp,"rb")==0);
+	Model o=malloc(sizeof(struct _MODEL));
+	o->bl=(uint8_t)getc(f);
+	o->b=malloc(o->bl*sizeof(struct _MODEL_BONE));
+	o->dtll=(((uint32_t)getc(f))<<24)|(((uint32_t)getc(f))<<16)|(((uint32_t)getc(f))<<8)|((uint32_t)getc(f));
+	o->ill=(((uint32_t)getc(f))<<24)|(((uint32_t)getc(f))<<16)|(((uint32_t)getc(f))<<8)|((uint32_t)getc(f));
+	o->dtl=malloc(o->dtll*8*sizeof(float));
+	o->il=malloc(o->ill*sizeof(uint16_t));
+	assert(fread_s((void*)o->dtl,o->dtll*8*sizeof(float),1,o->dtll*8*sizeof(float),f)==o->dtll*8*sizeof(float));
+	assert(fread_s((void*)o->il,o->ill*sizeof(uint16_t),1,o->ill*sizeof(uint16_t),f)==o->ill*sizeof(uint16_t));
+	for (uint32_t i=0;i<o->dtll*8;i++){
+		*(o->dtl+i)=_float(*(o->dtl+i));
+	}
+	for (uint32_t i=0;i<o->ill;i++){
+		*(o->il+i)=_uint16_t(*(o->il+i));
+	}
+	for (uint8_t i=0;i<o->bl;i++){
+		*(o->b+i)=_load_model_bone(f);
+	}
+	fclose(f);
+	o->_vb=NULL;
+	o->_ib=NULL;
+	GEngine_update_model(o);
+	return o;
+}
+
+
+
+void GEngine_update_model(Model m){
+	D3D11_BUFFER_DESC bd={
+		m->dtll*sizeof(float),
+		D3D11_USAGE_DEFAULT,
+		D3D11_BIND_VERTEX_BUFFER,
+		0,
+		0,
+		0
+	};
+	D3D11_SUBRESOURCE_DATA dt={
+		m->dtl,
+		0,
+		0
+	};
+	HRESULT hr=ID3D11Device_CreateBuffer(_d3_d,&bd,&dt,&m->_vb);
+	if (FAILED(hr)){
+		printf("ERR4\n");
+		return;
+	}
+	bd.Usage=D3D11_USAGE_DEFAULT;
+	bd.ByteWidth=m->ill*sizeof(uint32_t);
+	bd.BindFlags=D3D11_BIND_INDEX_BUFFER;
+	bd.CPUAccessFlags=0;
+	dt.pSysMem=m->il;
+	hr=ID3D11Device_CreateBuffer(_d3_d,&bd,&dt,&m->_ib);
+	if (FAILED(hr)){
+		printf("ERR5\n");
+		return;
+	}
+}
+
+
+
+void GEngine_draw_model(Model m){
+	unsigned int off=0;
+	unsigned int st=8*sizeof(float);
+	ID3D11DeviceContext_IASetVertexBuffers(_d3_dc,0,1,&m->_vb,&st,&off);
+	ID3D11DeviceContext_IASetIndexBuffer(_d3_dc,m->_ib,DXGI_FORMAT_R16_UINT,0);
+	ID3D11DeviceContext_IASetPrimitiveTopology(_d3_dc,D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	ID3D11DeviceContext_DrawIndexed(_d3_dc,m->ill,0,0);
+}
+
+
+
+void GEngine_draw_model_bones(Model m){
+	uint32_t vll=0;
+	float* vl=NULL;
+	uint32_t ill=0;
+	uint16_t* il=NULL;
+	for (uint8_t i=0;i<m->bl;i++){
+		float t[]={0,0,0,0,0,0};
+		_draw_model_bones(m->b+i,t,&vll,&vl,&ill,&il);
+	}
+	D3D11_BUFFER_DESC bd={
+		vll*sizeof(float),
+		D3D11_USAGE_DEFAULT,
+		D3D11_BIND_VERTEX_BUFFER,
+		0,
+		0,
+		0
+	};
+	D3D11_SUBRESOURCE_DATA dt={
+		vl,
+		0,
+		0
+	};
+	ID3D11Buffer* vb=NULL;
+	HRESULT hr=ID3D11Device_CreateBuffer(_d3_d,&bd,&dt,&vb);
+	if (FAILED(hr)){
+		printf("ERR4\n");
+		return;
+	}
+	bd.Usage=D3D11_USAGE_DEFAULT;
+	bd.ByteWidth=ill*sizeof(uint32_t);
+	bd.BindFlags=D3D11_BIND_INDEX_BUFFER;
+	bd.CPUAccessFlags=0;
+	dt.pSysMem=il;
+	ID3D11Buffer* ib=NULL;
+	hr=ID3D11Device_CreateBuffer(_d3_d,&bd,&dt,&ib);
+	if (FAILED(hr)){
+		printf("ERR5\n");
+		return;
+	}
+	unsigned int off=0;
+	unsigned int st=7*sizeof(float);
+	ID3D11DeviceContext_IASetVertexBuffers(_d3_dc,0,1,&vb,&st,&off);
+	ID3D11DeviceContext_IASetIndexBuffer(_d3_dc,ib,DXGI_FORMAT_R16_UINT,0);
+	ID3D11DeviceContext_IASetPrimitiveTopology(_d3_dc,D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	ID3D11DeviceContext_DrawIndexed(_d3_dc,ill,0,0);
+	free(vl);
+	free(il);
+}
+
+
+
 ObjectBuffer GEngine_create_object_buffer(){
 	ObjectBuffer o=malloc(sizeof(struct _OBJECT_BUFFER));
 	o->vll=0;
 	o->vl=NULL;
 	o->ill=0;
 	o->il=NULL;
-	o->st=3;
+	o->st=3*sizeof(float);
 	o->_vb=NULL;
 	o->_ib=NULL;
 	return o;
@@ -669,32 +979,21 @@ void GEngine_set_color(float r,float g,float b,float a){
 
 
 
-VertexShader GEngine_load_vertex_shader(const wchar_t* fp,const char* e,const char* v,VS_INPUT_LAYOUT* il,uint16_t ill){
+VertexShader GEngine_load_vertex_shader(const BYTE* dt,size_t ln,VS_INPUT_LAYOUT* il,uint16_t ill){
 	_vsll++;
 	_vsl=realloc(_vsl,_vsll*sizeof(ID3D11VertexShader*));
-	ID3DBlob* b=NULL;
-	ID3DBlob* err=NULL;
-	HRESULT hr=D3DCompileFromFile(fp,NULL,NULL,e,v,D3DCOMPILE_ENABLE_STRICTNESS,0,&b,&err);
-	if (FAILED(hr)){
-		if (err!=NULL){
-			printf("Error loading VertexShader %s\n",(char*)ID3D10Blob_GetBufferPointer(err));
-			ID3D10Blob_Release(err);
-		}
-		assert(0);
-		return -1;
-	}
 	ID3D11VertexShader* vsp=NULL;
-	hr=ID3D11Device_CreateVertexShader(_d3_d,ID3D10Blob_GetBufferPointer(b),ID3D10Blob_GetBufferSize(b),NULL,&vsp);
+	HRESULT hr=ID3D11Device_CreateVertexShader(_d3_d,dt,ln,NULL,&vsp);
 	*(_vsl+_vsll-1)=vsp;
 	if (FAILED(hr)){
 		printf("Error creating VS\n");
 		return -1;
 	}
 	ID3D11InputLayout* vl=NULL;
-	hr=ID3D11Device_CreateInputLayout(_d3_d,il,ill,ID3D10Blob_GetBufferPointer(b),ID3D10Blob_GetBufferSize(b),&vl);
-	ID3D10Blob_Release(b);
+	hr=ID3D11Device_CreateInputLayout(_d3_d,il,ill,dt,ln,&vl);
 	if (FAILED(hr)){
 		printf("Error creating VS Input Layout\n");
+		assert(0);
 		return -1;
 	}
 	ID3D11DeviceContext_IASetInputLayout(_d3_dc,vl);
@@ -703,22 +1002,11 @@ VertexShader GEngine_load_vertex_shader(const wchar_t* fp,const char* e,const ch
 
 
 
-PixelShader GEngine_load_pixel_shader(const wchar_t* fp,const char* e,const char* v){
+PixelShader GEngine_load_pixel_shader(const BYTE* dt,size_t ln){
 	_psll++;
 	_psl=realloc(_psl,_psll*sizeof(ID3D11PixelShader*));
-	ID3DBlob* b=NULL;
-	ID3DBlob* err=NULL;
-	HRESULT hr=D3DCompileFromFile(fp,NULL,NULL,e,v,D3DCOMPILE_ENABLE_STRICTNESS,0,&b,&err);
-	if (FAILED(hr)){
-		printf("Error loading PixelShader\n");
-		if (err!=NULL){
-			ID3D10Blob_Release(err);
-		}
-		return -1;
-	}
 	ID3D11PixelShader* psp=NULL;
-	hr=ID3D11Device_CreatePixelShader(_d3_d,ID3D10Blob_GetBufferPointer(b),ID3D10Blob_GetBufferSize(b),NULL,&psp);
-	ID3D10Blob_Release(b);
+	HRESULT hr=ID3D11Device_CreatePixelShader(_d3_d,dt,ln,NULL,&psp);
 	*(_psl+_psll-1)=psp;
 	if (FAILED(hr)){
 		printf("Error creating PS\n");
@@ -811,6 +1099,20 @@ void GEngine_use_pixel_shader(PixelShader ps){
 
 
 void GEngine_close(void){
+	if (_vsl!=NULL){
+		free(_vsl);
+	}
+	if (_psl!=NULL){
+		free(_psl);
+	}
+	if (_cbl!=NULL){
+		for (size_t i=0;i<_cbll;i++){
+			ID3D11Buffer_Release(*(_cbl+i));
+		}
+		free(_cbl);
+		free(_cblsz);
+		free(_cblp);
+	}
 	if (_d3_d!=NULL){
 		ID3D11Device_Release(_d3_d);
 		_d3_d=NULL;

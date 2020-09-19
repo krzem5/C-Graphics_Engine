@@ -1,6 +1,10 @@
 #include <g_engine.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <phong_vertex.h>
+#include <phong_pixel.h>
+#include <phong_vertex_tex.h>
+#include <phong_pixel_tex.h>
 
 
 
@@ -35,6 +39,38 @@ VS_INPUT_LAYOUT vs_inp[]={
 
 
 
+VS_INPUT_LAYOUT vs_inp_tex[]={
+	{
+		"POSITION",
+		0,
+		DXGI_FORMAT_R32G32B32_FLOAT,
+		0,
+		0,
+		D3D11_INPUT_PER_VERTEX_DATA,
+		0
+	},
+	{
+		"NORMAL",
+		0,
+		DXGI_FORMAT_R32G32B32_FLOAT,
+		0,
+		12,
+		D3D11_INPUT_PER_VERTEX_DATA,
+		0
+	},
+	{
+		"TEXCOORD",
+		0,
+		DXGI_FORMAT_R32G32_FLOAT,
+		0,
+		24,
+		D3D11_INPUT_PER_VERTEX_DATA,
+		0
+	}
+};
+
+
+
 struct SHADER_DATA sdt[1]={
 	{
 		SHADER_DATA_TYPE_CONSTANT_BUFFER,
@@ -47,18 +83,23 @@ struct SHADER_DATA sdt[1]={
 
 
 VertexShader vs;
+VertexShader vs_tex;
 PixelShader ps;
+PixelShader ps_tex;
 ConstantBuffer cb;
 Matrix wm;
 Matrix pm;
 Camera c;
 ObjectBuffer ob;
+Model m;
 
 
 
 void init(void){
-	vs=GEngine_load_vertex_shader(L"rsrc/phong.hlsl","vertex_shader","vs_4_0",vs_inp,2);
-	ps=GEngine_load_pixel_shader(L"rsrc/phong.hlsl","pixel_shader","ps_4_0");
+	vs=GEngine_load_vertex_shader(g_vertex_shader,sizeof(g_vertex_shader),vs_inp,sizeof(vs_inp)/sizeof(VS_INPUT_LAYOUT));
+	vs_tex=GEngine_load_vertex_shader(g_vertex_shader_tex,sizeof(g_vertex_shader_tex),vs_inp_tex,sizeof(vs_inp_tex)/sizeof(VS_INPUT_LAYOUT));
+	ps=GEngine_load_pixel_shader(g_pixel_shader,sizeof(g_pixel_shader));
+	ps_tex=GEngine_load_pixel_shader(g_pixel_shader_tex,sizeof(g_pixel_shader_tex));
 	cb=GEngine_create_constant_buffer(sizeof(struct VertexShaderInput));
 	sdt->id=cb;
 	c=GEngine_create_camera(5,5,0,5,0,-90,0,0);
@@ -68,6 +109,7 @@ void init(void){
 	wm=GEngine_identity_matrix();
 	pm=GEngine_perspective_fov_matrix(GENGINE_PIDIV2,GEngine_aspect_ratio(),0.01f,1000);
 	ob=GEngine_box_object_buffer();
+	m=GEngine_load_model("rsrc\\characterMedium.mdl");
 }
 
 
@@ -90,6 +132,9 @@ void render(double dt){
 	GEngine_use_vertex_shader(vs);
 	GEngine_use_pixel_shader(ps);
 	GEngine_draw_object_buffer(ob);
+	// GEngine_use_vertex_shader(vs_tex);
+	// GEngine_use_pixel_shader(ps_tex);
+	GEngine_draw_model_bones(m);
 	if (GEngine_is_pressed(0x1b)==true){
 		GEngine_close();
 	}

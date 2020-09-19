@@ -40,6 +40,7 @@ struct _VECTOR;
 struct _MATRIX;
 struct _CAMERA;
 struct _OBJECT_BUFFER;
+struct _MODEL;
 
 
 
@@ -52,6 +53,7 @@ typedef struct _MATRIX* Matrix;
 typedef struct _MATRIX RawMatrix;
 typedef struct _CAMERA* Camera;
 typedef struct _OBJECT_BUFFER* ObjectBuffer;
+typedef struct _MODEL* Model;
 typedef D3D11_INPUT_ELEMENT_DESC VS_INPUT_LAYOUT;
 typedef void (*GEngine_init_func)(void);
 typedef void (*GEngine_render_func)(double dt);
@@ -137,6 +139,35 @@ struct _OBJECT_BUFFER{
 
 
 
+struct _MODEL_BONE{
+	uint8_t nml;
+	char* nm;
+	float l;
+	float* d;
+	float* tm;
+	float* dt;
+	uint32_t wil;
+	uint16_t* il;
+	float* wl;
+	uint8_t cl;
+	struct _MODEL_BONE* c;
+};
+
+
+
+struct _MODEL{
+	uint8_t bl;
+	struct _MODEL_BONE* b;
+	uint32_t dtll;
+	uint32_t ill;
+	float* dtl;
+	uint16_t* il;
+	ID3D11Buffer* _vb;
+	ID3D11Buffer* _ib;
+};
+
+
+
 struct SHADER_DATA{
 	enum SHADER_DATA_TYPE t;
 	ConstantBuffer id;
@@ -178,6 +209,22 @@ Matrix GEngine_update_camera(Camera c,float dt);
 
 
 
+Model GEngine_load_model(const char* fp);
+
+
+
+void GEngine_update_model(Model m);
+
+
+
+void GEngine_draw_model(Model m);
+
+
+
+void GEngine_draw_model_bones(Model m);
+
+
+
 ObjectBuffer GEngine_create_object_buffer();
 
 
@@ -214,11 +261,11 @@ void GEngine_set_color(float r,float g,float b,float a);
 
 
 
-VertexShader GEngine_load_vertex_shader(const wchar_t* fp,const char* e,const char* v,VS_INPUT_LAYOUT* il,uint16_t ill);
+VertexShader GEngine_load_vertex_shader(const BYTE* dt,size_t ln,VS_INPUT_LAYOUT* il,uint16_t ill);
 
 
 
-PixelShader GEngine_load_pixel_shader(const wchar_t* fp,const char* e,const char* v);
+PixelShader GEngine_load_pixel_shader(const BYTE* dt,size_t ln);
 
 
 
