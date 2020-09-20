@@ -114,7 +114,7 @@ void init(void){
 	pm=GEngine_perspective_fov_matrix(GENGINE_PIDIV2,GEngine_aspect_ratio(),0.01f,1000);
 	ob=GEngine_box_object_buffer();
 	m=GEngine_load_model("rsrc\\ybot.mdl",1);
-	ia=GEngine_load_animation("rsrc\\falling to roll.anm");
+	ia=GEngine_load_animation("rsrc\\idle.anm",m);
 	an=GEngine_create_animator(m);
 }
 

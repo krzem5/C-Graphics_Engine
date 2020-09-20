@@ -81,6 +81,17 @@ enum SHADER_DATA_FLAGS{
 
 
 
+enum _ANIMATION_BONE_FLAG{
+	_ANIMATION_BONE_FLAG_X=0x01,
+	_ANIMATION_BONE_FLAG_Y=0x02,
+	_ANIMATION_BONE_FLAG_Z=0x04,
+	_ANIMATION_BONE_FLAG_RX=0x08,
+	_ANIMATION_BONE_FLAG_RY=0x10,
+	_ANIMATION_BONE_FLAG_RZ=0x20
+};
+
+
+
 struct _VECTOR{
 	float x;
 	float y;
@@ -178,6 +189,7 @@ struct _MODEL_LAYER{
 
 
 struct _MODEL{
+	char* nm;
 	uint8_t ll;
 	struct _MODEL_LAYER* l;
 	uint8_t sl;
@@ -197,9 +209,30 @@ struct _MODEL_PHONG_CB{
 
 
 
+union _ANIMATION_BONE_ATTR{
+	float v;
+	float* l;
+};
+
+
+
+struct _ANIMATION_BONE{
+	uint8_t f;
+	union _ANIMATION_BONE_ATTR x;
+	union _ANIMATION_BONE_ATTR y;
+	union _ANIMATION_BONE_ATTR z;
+	union _ANIMATION_BONE_ATTR rx;
+	union _ANIMATION_BONE_ATTR ry;
+	union _ANIMATION_BONE_ATTR rz;
+};
+
+
+
 struct _ANIMATION{
 	char* nm;
-	uint32_t d;
+	uint16_t d;
+	uint8_t bl;
+	struct _ANIMATION_BONE* b;
 };
 
 
@@ -208,7 +241,7 @@ struct _ANIMATOR{
 	Model m;
 	Animation a;
 	bool _c;
-	uint32_t _f;
+	uint16_t _f;
 };
 
 
@@ -270,7 +303,7 @@ void GEngine_draw_model_bones(Model m,uint8_t i);
 
 
 
-Animation GEngine_load_animation(const char* fp);
+Animation GEngine_load_animation(const char* fp,Model m);
 
 
 
