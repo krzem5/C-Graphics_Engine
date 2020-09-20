@@ -102,6 +102,7 @@ struct _MODEL_BONE _load_model_bone(FILE* f){
 	o.nml=getc(f);
 	o.nm=malloc(o.nml*sizeof(char));
 	assert(fread_s((void*)o.nm,o.nml*sizeof(char),1,o.nml*sizeof(char),f)==o.nml*sizeof(char));
+	// printf("%s\n",(char*)memcpy(calloc(o.nml+1),o.nm,o.nml));
 	assert(fread_s((void*)(&o.l),sizeof(float),1,sizeof(float),f)==sizeof(float));
 	o.l=_float(o.l);
 	o.cl=getc(f);
@@ -189,8 +190,8 @@ void _draw_model_bones(struct _MODEL_BONE* b,float* t,uint32_t* vll,float** vl,u
 		*(nt+i)+=*(b->d+i);
 	}
 	if (b->l!=0){
-		(*vll)+=21;
-		(*ill)+=6;
+		(*vll)+=77;
+		(*ill)+=30;
 		*vl=realloc(*vl,(*vll)*sizeof(float));
 		*il=realloc(*il,(*ill)*sizeof(uint16_t));
 		float rx=sinf(*(nt+3))*cosf(*(nt+4));
@@ -200,39 +201,66 @@ void _draw_model_bones(struct _MODEL_BONE* b,float* t,uint32_t* vll,float** vl,u
 		rx/=rm;
 		ry/=rm;
 		rz/=rm;
-		float prx=-ry/3;
-		float pry=rx/3;
-		float prz=rz/3;
-		*(*vl+*vll-21)=*nt+_mult_mat_x(b->tm,prx,pry,prz);
-		*(*vl+*vll-20)=*(nt+1)+_mult_mat_y(b->tm,prx,pry,prz);
-		*(*vl+*vll-19)=*(nt+2)+_mult_mat_z(b->tm,prx,pry,prz);
-		*(*vl+*vll-18)=0.6f;
-		*(*vl+*vll-17)=0.6f;
-		*(*vl+*vll-16)=0.6f;
-		*(*vl+*vll-15)=1;
-		*(*vl+*vll-14)=*nt+_mult_mat_x(b->tm,-prx,-pry,-prz);
-		*(*vl+*vll-13)=*(nt+1)+_mult_mat_y(b->tm,-prx,-pry,-prz);
-		*(*vl+*vll-12)=*(nt+2)+_mult_mat_z(b->tm,-prx,-pry,-prz);
-		*(*vl+*vll-11)=0.6f;
-		*(*vl+*vll-10)=0.6f;
-		*(*vl+*vll-9)=0.6f;
-		*(*vl+*vll-8)=1;
-		*(*vl+*vll-7)=*nt+_mult_mat_x(b->tm,rx*b->l,ry*b->l,rz*b->l);
-		*(*vl+*vll-6)=*(nt+1)+_mult_mat_y(b->tm,rx*b->l,ry*b->l,rz*b->l);
-		*(*vl+*vll-5)=*(nt+2)+_mult_mat_z(b->tm,rx*b->l,ry*b->l,rz*b->l);
-		*(*vl+*vll-4)=1;
-		*(*vl+*vll-3)=(b->cl>0?1.0f:0.0f);
-		*(*vl+*vll-2)=(b->cl>0?1.0f:0.0f);
-		*(*vl+*vll-1)=1;
-		*(*il+*ill-6)=(uint16_t)(*ill/2-3);
-		*(*il+*ill-5)=(uint16_t)(*ill/2-2);
-		*(*il+*ill-4)=(uint16_t)(*ill/2-1);
-		*(*il+*ill-3)=(uint16_t)(*ill/2-1);
-		*(*il+*ill-2)=(uint16_t)(*ill/2-2);
-		*(*il+*ill-1)=(uint16_t)(*ill/2-3);
-		*nt+=_mult_mat_x(b->tm,rx*b->l,ry*b->l,rz*b->l);
-		*(nt+1)+=_mult_mat_y(b->tm,rx*b->l,ry*b->l,rz*b->l);
-		*(nt+2)+=_mult_mat_z(b->tm,rx*b->l,ry*b->l,rz*b->l);
+		float prx=0;
+		float pry=0;
+		float prz=0;
+		if (rx!=0){
+			prx=-rz;
+			prz=rx;
+		}
+		else if (ry!=0){
+			prx=ry;
+			pry=-rx;
+		}
+		else{
+			pry=rz;
+			prz=-ry;
+		}
+		float ax=*b->d+rx;
+		float ay=*(b->d+1)+ry;
+		float az=*(b->d+2)+rz;
+		float am=sqrtf(ax*ax+ay*ay+az*az);
+		ax/=am;
+		ay/=am;
+		az/=am;
+		uint32_t i=(*vll)-77;
+		for (float a=0;a<GENGINE_2PI;a+=GENGINE_PI/5){
+			float sa=sinf(a);
+			float ca=cosf(a);
+			float nx=prx*(ca+ax*ax*(1-ca))+pry*(ax*ay*(1-ca)-az*sa)+prz*(ax*az*(1-ca)+ay*sa);
+			float ny=prx*(ay*ax*(1-ca)+az*sa)+pry*(ca+ay*ay*(1-ca))+prz*(ay*az*(1-ca)-ax*sa);
+			float nz=prx*(az*ax*(1-ca)-ay*sa)+pry*(az*ay*(1-ca)+ax*sa)+prz*(ca+az*az*(1-ca));
+			float nm=sqrtf(nx*nx+ny*ny+nz*nz);
+			nx/=nm;
+			ny/=nm;
+			nz/=nm;
+			*(*vl+i)=*nt+_mult_mat_x(b->tm,nx,ny,nz);
+			*(*vl+i+1)=*(nt+1)+_mult_mat_y(b->tm,nx,ny,nz);
+			*(*vl+i+2)=*(nt+2)+_mult_mat_z(b->tm,nx,ny,nz);
+			*(*vl+i+3)=0.6f;
+			*(*vl+i+4)=0.6f;
+			*(*vl+i+5)=0.6f;
+			*(*vl+i+6)=1;
+			i+=7;
+		}
+		*(*vl+i)=*nt+*b->d+_mult_mat_x(b->tm,rx,ry,rz);
+		*(*vl+i+1)=*(nt+1)+*(b->d+1)+_mult_mat_y(b->tm,rx,ry,rz);
+		*(*vl+i+2)=*(nt+2)+*(b->d+2)+_mult_mat_z(b->tm,rx,ry,rz);
+		*(*vl+i+3)=1;
+		*(*vl+i+4)=1;
+		*(*vl+i+5)=1;
+		*(*vl+i+6)=1;
+		i=(*ill)-30;
+		uint16_t bv=(uint16_t)((*vll)-77)/7;
+		for (uint8_t j=0;j<10;j++){
+			*(*il+i)=(uint16_t)(bv+j);
+			*(*il+i+1)=(uint16_t)(bv+(j+1)%10);
+			*(*il+i+2)=(uint16_t)(bv+10);
+			i+=3;
+		}
+		*nt+=*b->d+_mult_mat_x(b->tm,rx,ry,rz);
+		*(nt+1)+=*(b->d+1)+_mult_mat_y(b->tm,rx,ry,rz);
+		*(nt+2)+=*(b->d+2)+_mult_mat_z(b->tm,rx,ry,rz);
 	}
 	for (uint8_t i=0;i<b->cl;i++){
 		_draw_model_bones(b->c+i,nt,vll,vl,ill,il);
@@ -394,7 +422,8 @@ Camera GEngine_create_camera(float ms,float rs,float x,float y,float z,float rx,
 	return o;
 }
 
-
+#define abs(x) ((x)<0?-(x):(x))
+#define ease(a,b) (abs((a)-(b))<=1e-3?(b):(a)+0.45f*((b)-(a)))
 
 Matrix GEngine_update_camera(Camera c,float dt){
 	if (_wf==false){
@@ -444,12 +473,18 @@ Matrix GEngine_update_camera(Camera c,float dt){
 		if (GEngine_is_pressed(VK_LSHIFT)){
 			c->_dy-=c->ms*dt;
 		}
-		c->x=(c->x-c->_dx>-1e-5&&c->x-c->_dx<1e-5?c->_dx:c->x+0.45f*(c->_dx-c->x));
-		c->y=(c->y-c->_dy>-1e-5&&c->y-c->_dy<1e-5?c->_dy:c->y+0.45f*(c->_dy-c->y));
-		c->z=(c->z-c->_dz>-1e-5&&c->z-c->_dz<1e-5?c->_dz:c->z+0.45f*(c->_dz-c->z));
-		c->rx=(c->rx-drxr>-1e-5&&c->rx-drxr<1e-5?drxr:c->rx+0.45f*(drxr-c->rx));
-		c->ry=(c->ry-dryr>-1e-5&&c->ry-dryr<1e-5?dryr:c->ry+0.45f*(dryr-c->ry));
-		c->rz=(c->rz-drzr>-1e-5&&c->rz-drzr<1e-5?drzr:c->rz+0.45f*(drzr-c->rz));
+		c->x=ease(c->x,c->_dx);
+		c->y=ease(c->y,c->_dy);
+		c->z=ease(c->z,c->_dz);
+		c->rx=ease(c->rx,drxr);
+		c->ry=ease(c->ry,dryr);
+		c->rz=ease(c->rz,drzr);
+		// c->x=(c->x-c->_dx>-1e-5&&c->x-c->_dx<1e-5?c->_dx:c->x+0.45f*(c->_dx-c->x));
+		// c->y=(c->y-c->_dy>-1e-5&&c->y-c->_dy<1e-5?c->_dy:c->y+0.45f*(c->_dy-c->y));
+		// c->z=(c->z-c->_dz>-1e-5&&c->z-c->_dz<1e-5?c->_dz:c->z+0.45f*(c->_dz-c->z));
+		// c->rx=(c->rx-drxr>-1e-5&&c->rx-drxr<1e-5?drxr:c->rx+0.45f*(drxr-c->rx));
+		// c->ry=(c->ry-dryr>-1e-5&&c->ry-dryr<1e-5?dryr:c->ry+0.45f*(dryr-c->ry));
+		// c->rz=(c->rz-drzr>-1e-5&&c->rz-drzr<1e-5?drzr:c->rz+0.45f*(drzr-c->rz));
 	}
 	if (c->lock==true){
 		SetCursorPos(_ww/2,_wh/2);
@@ -467,9 +502,9 @@ Model GEngine_load_model(const char* fp){
 	o->b=malloc(o->bl*sizeof(struct _MODEL_BONE));
 	o->dtll=(((uint32_t)getc(f))<<24)|(((uint32_t)getc(f))<<16)|(((uint32_t)getc(f))<<8)|((uint32_t)getc(f));
 	o->ill=(((uint32_t)getc(f))<<24)|(((uint32_t)getc(f))<<16)|(((uint32_t)getc(f))<<8)|((uint32_t)getc(f));
-	o->dtl=malloc(o->dtll*8*sizeof(float));
+	o->dtl=malloc(o->dtll*sizeof(float)*8);
 	o->il=malloc(o->ill*sizeof(uint16_t));
-	assert(fread_s((void*)o->dtl,o->dtll*8*sizeof(float),1,o->dtll*8*sizeof(float),f)==o->dtll*8*sizeof(float));
+	assert(fread_s((void*)o->dtl,o->dtll*sizeof(float)*8,1,o->dtll*sizeof(float)*8,f)==o->dtll*sizeof(float)*8);
 	assert(fread_s((void*)o->il,o->ill*sizeof(uint16_t),1,o->ill*sizeof(uint16_t),f)==o->ill*sizeof(uint16_t));
 	for (uint32_t i=0;i<o->dtll*8;i++){
 		*(o->dtl+i)=_float(*(o->dtl+i));
@@ -509,7 +544,7 @@ void GEngine_update_model(Model m){
 		return;
 	}
 	bd.Usage=D3D11_USAGE_DEFAULT;
-	bd.ByteWidth=m->ill*sizeof(uint32_t);
+	bd.ByteWidth=m->ill*sizeof(uint16_t);
 	bd.BindFlags=D3D11_BIND_INDEX_BUFFER;
 	bd.CPUAccessFlags=0;
 	dt.pSysMem=m->il;
@@ -562,7 +597,7 @@ void GEngine_draw_model_bones(Model m){
 		return;
 	}
 	bd.Usage=D3D11_USAGE_DEFAULT;
-	bd.ByteWidth=ill*sizeof(uint32_t);
+	bd.ByteWidth=ill*sizeof(uint16_t);
 	bd.BindFlags=D3D11_BIND_INDEX_BUFFER;
 	bd.CPUAccessFlags=0;
 	dt.pSysMem=il;

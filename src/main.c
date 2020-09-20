@@ -102,14 +102,14 @@ void init(void){
 	ps_tex=GEngine_load_pixel_shader(g_pixel_shader_tex,sizeof(g_pixel_shader_tex));
 	cb=GEngine_create_constant_buffer(sizeof(struct VertexShaderInput));
 	sdt->id=cb;
-	c=GEngine_create_camera(5,5,0,5,0,-90,0,0);
+	c=GEngine_create_camera(50,5,0,5,0,-90,0,0);
 	c->lock=true;
 	c->enabled=true;
 	GEngine_set_shader_data(sdt);
 	wm=GEngine_identity_matrix();
 	pm=GEngine_perspective_fov_matrix(GENGINE_PIDIV2,GEngine_aspect_ratio(),0.01f,1000);
 	ob=GEngine_box_object_buffer();
-	m=GEngine_load_model("rsrc\\characterMedium.mdl");
+	m=GEngine_load_model("rsrc\\ybot.mdl");
 }
 
 
