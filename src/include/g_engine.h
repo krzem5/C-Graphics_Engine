@@ -32,7 +32,9 @@
 #define GEngine_raw_identity_matrix() ((RawMatrix){1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1})
 #define GEngine_raw_matrix(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p) ((RawMatrix){(a),(b),(c),(d),(e),(f),(g),(h),(i),(j),(k),(l),(m),(n),(o),(p)})
 #define GEngine_as_raw_matrix(m) (*((RawMatrix*)(m)))
+#define GEngine_pos_from_camera(c) ((RawVector){(c)->x,(c)->y,(c)->z,1})
 #define GEngine_free_matrix(m) ((m)!=NULL?(free((m)),NULL):NULL)
+#define GEngine_animation_finished(a) ((a)->_c==true)
 
 
 
@@ -41,6 +43,8 @@ struct _MATRIX;
 struct _CAMERA;
 struct _OBJECT_BUFFER;
 struct _MODEL;
+struct _ANIMATION;
+struct _ANIMATOR;
 
 
 
@@ -54,6 +58,8 @@ typedef struct _MATRIX RawMatrix;
 typedef struct _CAMERA* Camera;
 typedef struct _OBJECT_BUFFER* ObjectBuffer;
 typedef struct _MODEL* Model;
+typedef struct _ANIMATION* Animation;
+typedef struct _ANIMATOR* Animator;
 typedef D3D11_INPUT_ELEMENT_DESC VS_INPUT_LAYOUT;
 typedef void (*GEngine_init_func)(void);
 typedef void (*GEngine_render_func)(double dt);
@@ -155,15 +161,54 @@ struct _MODEL_BONE{
 
 
 
-struct _MODEL{
+struct _MODEL_LAYER{
+	uint8_t nml;
+	char* nm;
 	uint8_t bl;
 	struct _MODEL_BONE* b;
+	ConstantBuffer m_cb;
 	uint32_t dtll;
 	uint32_t ill;
 	float* dtl;
 	uint16_t* il;
 	ID3D11Buffer* _vb;
 	ID3D11Buffer* _ib;
+};
+
+
+
+struct _MODEL{
+	uint8_t ll;
+	struct _MODEL_LAYER* l;
+	uint8_t sl;
+};
+
+
+
+struct _MODEL_PHONG_CB{
+	RawVector ac;
+	RawVector dc;
+	RawVector sc;
+	RawVector d;
+	RawVector s;
+	float df;
+	float se;
+};
+
+
+
+struct _ANIMATION{
+	char* nm;
+	uint32_t d;
+};
+
+
+
+struct _ANIMATOR{
+	Model m;
+	Animation a;
+	bool _c;
+	uint32_t _f;
 };
 
 
@@ -209,19 +254,35 @@ Matrix GEngine_update_camera(Camera c,float dt);
 
 
 
-Model GEngine_load_model(const char* fp);
+Model GEngine_load_model(const char* fp,uint8_t sl);
 
 
 
-void GEngine_update_model(Model m);
+void GEngine_update_model(Model m,uint8_t i);
 
 
 
-void GEngine_draw_model(Model m);
+void GEngine_draw_model(Model m,uint8_t i);
 
 
 
-void GEngine_draw_model_bones(Model m);
+void GEngine_draw_model_bones(Model m,uint8_t i);
+
+
+
+Animation GEngine_load_animation(const char* fp);
+
+
+
+Animator GEngine_create_animator(Model m);
+
+
+
+void GEngine_set_animation(Animator a,Animation an);
+
+
+
+void GEngine_update_animator(Animator a,float dt);
 
 
 

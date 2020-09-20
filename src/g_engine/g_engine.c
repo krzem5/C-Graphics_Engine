@@ -13,6 +13,10 @@
 
 
 
+#define STRIDE 8
+
+
+
 HWND _w=NULL;
 uint32_t _ww=0;
 uint32_t _wh=0;
@@ -99,10 +103,11 @@ LRESULT CALLBACK _msg_cb(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
 
 struct _MODEL_BONE _load_model_bone(FILE* f){
 	struct _MODEL_BONE o;
-	o.nml=getc(f);
-	o.nm=malloc(o.nml*sizeof(char));
+	o.nml=(uint8_t)getc(f);
+	o.nm=malloc(o.nml*sizeof(char)+1);
 	assert(fread_s((void*)o.nm,o.nml*sizeof(char),1,o.nml*sizeof(char),f)==o.nml*sizeof(char));
-	// printf("%s\n",(char*)memcpy(calloc(o.nml+1),o.nm,o.nml));
+	*(o.nm+o.nml)=0;
+	printf("%s\n",o.nm);
 	assert(fread_s((void*)(&o.l),sizeof(float),1,sizeof(float),f)==sizeof(float));
 	o.l=_float(o.l);
 	o.cl=getc(f);
@@ -140,59 +145,65 @@ struct _MODEL_BONE _load_model_bone(FILE* f){
 
 
 float _mult_mat_x(float* m,float x,float y,float z){
-	//  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
-	// 00 01 02 03 10 11 12 13 20 21 22 23 30 31 32 33
-	//
-	// 00 01 02 03
-	// 10 11 12 13
-	// 20 21 22 23
-	// 30 31 31 33
-	//
-	// 00*x+01*y+02*z+03
 	return (*m)*x+(*(m+1))*y+(*(m+2))*z+(*(m+3));
 }
 
 
 
 float _mult_mat_y(float* m,float x,float y,float z){
-	//  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
-	// 00 01 02 03 10 11 12 13 20 21 22 23 30 31 32 33
-	//
-	// 00 01 02 03
-	// 10 11 12 13
-	// 20 21 22 23
-	// 30 31 31 33
-	//
-	// 10*x+11*y+12*z+13
 	return (*(m+4))*x+(*(m+5))*y+(*(m+6))*z+(*(m+7));
 }
 
 
 
 float _mult_mat_z(float* m,float x,float y,float z){
-	//  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
-	// 00 01 02 03 10 11 12 13 20 21 22 23 30 31 32 33
-	//
-	// 00 01 02 03
-	// 10 11 12 13
-	// 20 21 22 23
-	// 30 31 31 33
-	//
-	// 20*x+21*y+22*z+23
 	return (*(m+8))*x+(*(m+9))*y+(*(m+10))*z+(*(m+11));
 }
 
 
 
-void _draw_model_bones(struct _MODEL_BONE* b,float* t,uint32_t* vll,float** vl,uint32_t* ill,uint16_t** il){
+void _deform_skin(struct _MODEL_BONE* b,float* t,float* dtl){
+	float* nt=memcpy(malloc(6*sizeof(float)),t,6*sizeof(float));
+	for (uint8_t i=3;i<6;i++){
+		*(nt+i)+=*(b->d+i);
+	}
+	for (uint32_t i=0;i<b->wil;i++){
+		float x=*(dtl+*(b->il+i)*STRIDE);
+		float y=*(dtl+*(b->il+i)*STRIDE+1);
+		float z=*(dtl+*(b->il+i)*STRIDE+2);
+		*(dtl+*(b->il+i)*STRIDE)=_mult_mat_x(b->dt,x,y,z);
+		*(dtl+*(b->il+i)*STRIDE+1)=_mult_mat_y(b->dt,x,y,z);
+		*(dtl+*(b->il+i)*STRIDE+2)=_mult_mat_z(b->dt,x,y,z);
+	}
+	if (b->l!=0){
+		float rx=sinf(*(nt+3))*cosf(*(nt+4));
+		float ry=cosf(*(nt+3));
+		float rz=sinf(*(nt+3))*sinf(*(nt+4));
+		float rm=sqrtf(rx*rx+ry*ry+rz*rz);
+		rx/=rm;
+		ry/=rm;
+		rz/=rm;
+		*nt+=*b->d+_mult_mat_x(b->tm,rx,ry,rz);
+		*(nt+1)+=*(b->d+1)+_mult_mat_y(b->tm,rx,ry,rz);
+		*(nt+2)+=*(b->d+2)+_mult_mat_z(b->tm,rx,ry,rz);
+	}
+	for (uint8_t i=0;i<b->cl;i++){
+		_deform_skin(b->c+i,nt,dtl);
+	}
+	free(nt);
+}
+
+
+
+void _draw_model_bones(struct _MODEL_BONE* b,float* t,uint32_t* dtll,float** dtl,uint32_t* ill,uint16_t** il){
 	float* nt=memcpy(malloc(6*sizeof(float)),t,6*sizeof(float));
 	for (uint8_t i=3;i<6;i++){
 		*(nt+i)+=*(b->d+i);
 	}
 	if (b->l!=0){
-		(*vll)+=77;
-		(*ill)+=30;
-		*vl=realloc(*vl,(*vll)*sizeof(float));
+		(*dtll)+=14;
+		(*ill)+=2;
+		*dtl=realloc(*dtl,(*dtll)*sizeof(float));
 		*il=realloc(*il,(*ill)*sizeof(uint16_t));
 		float rx=sinf(*(nt+3))*cosf(*(nt+4));
 		float ry=cosf(*(nt+3));
@@ -201,69 +212,28 @@ void _draw_model_bones(struct _MODEL_BONE* b,float* t,uint32_t* vll,float** vl,u
 		rx/=rm;
 		ry/=rm;
 		rz/=rm;
-		float prx=0;
-		float pry=0;
-		float prz=0;
-		if (rx!=0){
-			prx=-rz;
-			prz=rx;
-		}
-		else if (ry!=0){
-			prx=ry;
-			pry=-rx;
-		}
-		else{
-			pry=rz;
-			prz=-ry;
-		}
-		float ax=*b->d+rx;
-		float ay=*(b->d+1)+ry;
-		float az=*(b->d+2)+rz;
-		float am=sqrtf(ax*ax+ay*ay+az*az);
-		ax/=am;
-		ay/=am;
-		az/=am;
-		uint32_t i=(*vll)-77;
-		for (float a=0;a<GENGINE_2PI;a+=GENGINE_PI/5){
-			float sa=sinf(a);
-			float ca=cosf(a);
-			float nx=prx*(ca+ax*ax*(1-ca))+pry*(ax*ay*(1-ca)-az*sa)+prz*(ax*az*(1-ca)+ay*sa);
-			float ny=prx*(ay*ax*(1-ca)+az*sa)+pry*(ca+ay*ay*(1-ca))+prz*(ay*az*(1-ca)-ax*sa);
-			float nz=prx*(az*ax*(1-ca)-ay*sa)+pry*(az*ay*(1-ca)+ax*sa)+prz*(ca+az*az*(1-ca));
-			float nm=sqrtf(nx*nx+ny*ny+nz*nz);
-			nx/=nm;
-			ny/=nm;
-			nz/=nm;
-			*(*vl+i)=*nt+_mult_mat_x(b->tm,nx,ny,nz);
-			*(*vl+i+1)=*(nt+1)+_mult_mat_y(b->tm,nx,ny,nz);
-			*(*vl+i+2)=*(nt+2)+_mult_mat_z(b->tm,nx,ny,nz);
-			*(*vl+i+3)=0.6f;
-			*(*vl+i+4)=0.6f;
-			*(*vl+i+5)=0.6f;
-			*(*vl+i+6)=1;
-			i+=7;
-		}
-		*(*vl+i)=*nt+*b->d+_mult_mat_x(b->tm,rx,ry,rz);
-		*(*vl+i+1)=*(nt+1)+*(b->d+1)+_mult_mat_y(b->tm,rx,ry,rz);
-		*(*vl+i+2)=*(nt+2)+*(b->d+2)+_mult_mat_z(b->tm,rx,ry,rz);
-		*(*vl+i+3)=1;
-		*(*vl+i+4)=1;
-		*(*vl+i+5)=1;
-		*(*vl+i+6)=1;
-		i=(*ill)-30;
-		uint16_t bv=(uint16_t)((*vll)-77)/7;
-		for (uint8_t j=0;j<10;j++){
-			*(*il+i)=(uint16_t)(bv+j);
-			*(*il+i+1)=(uint16_t)(bv+(j+1)%10);
-			*(*il+i+2)=(uint16_t)(bv+10);
-			i+=3;
-		}
+		*(*dtl+*dtll-14)=*nt;
+		*(*dtl+*dtll-13)=*(nt+1);
+		*(*dtl+*dtll-12)=*(nt+2);
+		*(*dtl+*dtll-11)=0.3f;
+		*(*dtl+*dtll-10)=0;
+		*(*dtl+*dtll-9)=0;
+		*(*dtl+*dtll-8)=1;
+		*(*dtl+*dtll-7)=*nt+*b->d+_mult_mat_x(b->tm,rx,ry,rz);
+		*(*dtl+*dtll-6)=*(nt+1)+*(b->d+1)+_mult_mat_y(b->tm,rx,ry,rz);
+		*(*dtl+*dtll-5)=*(nt+2)+*(b->d+2)+_mult_mat_z(b->tm,rx,ry,rz);
+		*(*dtl+*dtll-4)=1;
+		*(*dtl+*dtll-3)=0;
+		*(*dtl+*dtll-2)=0;
+		*(*dtl+*dtll-1)=1;
+		*(*il+*ill-2)=(uint16_t)(*ill-2);
+		*(*il+*ill-1)=(uint16_t)(*ill-1);
 		*nt+=*b->d+_mult_mat_x(b->tm,rx,ry,rz);
 		*(nt+1)+=*(b->d+1)+_mult_mat_y(b->tm,rx,ry,rz);
 		*(nt+2)+=*(b->d+2)+_mult_mat_z(b->tm,rx,ry,rz);
 	}
 	for (uint8_t i=0;i<b->cl;i++){
-		_draw_model_bones(b->c+i,nt,vll,vl,ill,il);
+		_draw_model_bones(b->c+i,nt,dtll,dtl,ill,il);
 	}
 	free(nt);
 }
@@ -313,8 +283,8 @@ Matrix GEngine_identity_matrix(){
 
 Matrix GEngine_y_rotation_matrix(float a){
 	Matrix o=malloc(sizeof(struct _MATRIX));
-	float c=cosf(a);
 	float s=sinf(a);
+	float c=cosf(a);
 	o->_00=c;
 	o->_01=0;
 	o->_02=-s;
@@ -422,8 +392,7 @@ Camera GEngine_create_camera(float ms,float rs,float x,float y,float z,float rx,
 	return o;
 }
 
-#define abs(x) ((x)<0?-(x):(x))
-#define ease(a,b) (abs((a)-(b))<=1e-3?(b):(a)+0.45f*((b)-(a)))
+
 
 Matrix GEngine_update_camera(Camera c,float dt){
 	if (_wf==false){
@@ -473,18 +442,12 @@ Matrix GEngine_update_camera(Camera c,float dt){
 		if (GEngine_is_pressed(VK_LSHIFT)){
 			c->_dy-=c->ms*dt;
 		}
-		c->x=ease(c->x,c->_dx);
-		c->y=ease(c->y,c->_dy);
-		c->z=ease(c->z,c->_dz);
-		c->rx=ease(c->rx,drxr);
-		c->ry=ease(c->ry,dryr);
-		c->rz=ease(c->rz,drzr);
-		// c->x=(c->x-c->_dx>-1e-5&&c->x-c->_dx<1e-5?c->_dx:c->x+0.45f*(c->_dx-c->x));
-		// c->y=(c->y-c->_dy>-1e-5&&c->y-c->_dy<1e-5?c->_dy:c->y+0.45f*(c->_dy-c->y));
-		// c->z=(c->z-c->_dz>-1e-5&&c->z-c->_dz<1e-5?c->_dz:c->z+0.45f*(c->_dz-c->z));
-		// c->rx=(c->rx-drxr>-1e-5&&c->rx-drxr<1e-5?drxr:c->rx+0.45f*(drxr-c->rx));
-		// c->ry=(c->ry-dryr>-1e-5&&c->ry-dryr<1e-5?dryr:c->ry+0.45f*(dryr-c->ry));
-		// c->rz=(c->rz-drzr>-1e-5&&c->rz-drzr<1e-5?drzr:c->rz+0.45f*(drzr-c->rz));
+		c->x=(c->x-c->_dx>=-1e-3&&c->x-c->_dx<=1e-3?c->_dx:c->x+0.45f*(c->_dx-c->x));
+		c->y=(c->y-c->_dy>=-1e-3&&c->y-c->_dy<=1e-3?c->_dy:c->y+0.45f*(c->_dy-c->y));
+		c->z=(c->z-c->_dz>=-1e-3&&c->z-c->_dz<=1e-3?c->_dz:c->z+0.45f*(c->_dz-c->z));
+		c->rx=(c->rx-drxr>=-1e-3&&c->rx-drxr<=1e-3?drxr:c->rx+0.45f*(drxr-c->rx));
+		c->ry=(c->ry-dryr>=-1e-3&&c->ry-dryr<=1e-3?dryr:c->ry+0.45f*(dryr-c->ry));
+		c->rz=(c->rz-drzr>=-1e-3&&c->rz-drzr<=1e-3?drzr:c->rz+0.45f*(drzr-c->rz));
 	}
 	if (c->lock==true){
 		SetCursorPos(_ww/2,_wh/2);
@@ -494,39 +457,85 @@ Matrix GEngine_update_camera(Camera c,float dt){
 
 
 
-Model GEngine_load_model(const char* fp){
+Model GEngine_load_model(const char* fp,uint8_t sl){
 	FILE* f=NULL;
 	assert(fopen_s(&f,fp,"rb")==0);
 	Model o=malloc(sizeof(struct _MODEL));
-	o->bl=(uint8_t)getc(f);
-	o->b=malloc(o->bl*sizeof(struct _MODEL_BONE));
-	o->dtll=(((uint32_t)getc(f))<<24)|(((uint32_t)getc(f))<<16)|(((uint32_t)getc(f))<<8)|((uint32_t)getc(f));
-	o->ill=(((uint32_t)getc(f))<<24)|(((uint32_t)getc(f))<<16)|(((uint32_t)getc(f))<<8)|((uint32_t)getc(f));
-	o->dtl=malloc(o->dtll*sizeof(float)*8);
-	o->il=malloc(o->ill*sizeof(uint16_t));
-	assert(fread_s((void*)o->dtl,o->dtll*sizeof(float)*8,1,o->dtll*sizeof(float)*8,f)==o->dtll*sizeof(float)*8);
-	assert(fread_s((void*)o->il,o->ill*sizeof(uint16_t),1,o->ill*sizeof(uint16_t),f)==o->ill*sizeof(uint16_t));
-	for (uint32_t i=0;i<o->dtll*8;i++){
-		*(o->dtl+i)=_float(*(o->dtl+i));
-	}
-	for (uint32_t i=0;i<o->ill;i++){
-		*(o->il+i)=_uint16_t(*(o->il+i));
-	}
-	for (uint8_t i=0;i<o->bl;i++){
-		*(o->b+i)=_load_model_bone(f);
+	o->ll=(uint8_t)getc(f);
+	o->l=malloc(sizeof(struct _MODEL_LAYER));
+	o->sl=sl;
+	for (uint8_t i=0;i<o->ll;i++){
+		(o->l+i)->nml=(uint8_t)getc(f);
+		(o->l+i)->nm=malloc((o->l+i)->nml*sizeof(char)+1);
+		assert(fread_s((void*)(o->l+i)->nm,(o->l+i)->nml*sizeof(char),1,(o->l+i)->nml*sizeof(char),f)==(o->l+i)->nml*sizeof(char));
+		*((o->l+i)->nm+(o->l+i)->nml)=0;
+		printf("%s\n",(o->l+i)->nm);
+		(o->l+i)->bl=(uint8_t)getc(f);
+		(o->l+i)->b=malloc((o->l+i)->bl*sizeof(struct _MODEL_BONE));
+		(o->l+i)->dtll=(((uint32_t)getc(f))<<24)|(((uint32_t)getc(f))<<16)|(((uint32_t)getc(f))<<8)|((uint32_t)getc(f));
+		(o->l+i)->ill=(((uint32_t)getc(f))<<24)|(((uint32_t)getc(f))<<16)|(((uint32_t)getc(f))<<8)|((uint32_t)getc(f));
+		(o->l+i)->dtl=malloc((o->l+i)->dtll*sizeof(float)*STRIDE);
+		(o->l+i)->il=malloc((o->l+i)->ill*sizeof(uint16_t));
+		(o->l+i)->m_cb=GEngine_create_constant_buffer(sizeof(struct _MODEL_PHONG_CB));
+		float* cb_b=malloc(17*sizeof(float));
+		assert(fread_s((void*)cb_b,17*sizeof(float),1,17*sizeof(float),f)==17*sizeof(float));
+		for (uint8_t j=0;j<17;j++){
+			*(cb_b+j)=_float(*(cb_b+j));
+		}
+		struct _MODEL_PHONG_CB cb;
+		cb.ac.x=*cb_b;
+		cb.ac.y=*(cb_b+1);
+		cb.ac.z=*(cb_b+2);
+		cb.ac.w=0;
+		cb.dc.x=*(cb_b+3);
+		cb.dc.y=*(cb_b+4);
+		cb.dc.z=*(cb_b+5);
+		cb.dc.w=0;
+		cb.sc.x=*(cb_b+6);
+		cb.sc.y=*(cb_b+7);
+		cb.sc.z=*(cb_b+8);
+		cb.sc.w=0;
+		cb.df=*(cb_b+9);
+		cb.se=*(cb_b+10);
+		cb.d.x=*(cb_b+11);
+		cb.d.y=*(cb_b+12);
+		cb.d.z=*(cb_b+13);
+		cb.d.w=0;
+		cb.s.x=*(cb_b+14);
+		cb.s.y=*(cb_b+15);
+		cb.s.z=*(cb_b+16);
+		cb.s.w=0;
+		GEngine_update_constant_buffer((o->l+i)->m_cb,&cb);
+		free(cb_b);
+		assert(fread_s((void*)(o->l+i)->dtl,(o->l+i)->dtll*sizeof(float)*STRIDE,1,(o->l+i)->dtll*sizeof(float)*STRIDE,f)==(o->l+i)->dtll*sizeof(float)*STRIDE);
+		assert(fread_s((void*)(o->l+i)->il,(o->l+i)->ill*sizeof(uint16_t),1,(o->l+i)->ill*sizeof(uint16_t),f)==(o->l+i)->ill*sizeof(uint16_t));
+		for (uint32_t j=0;j<(o->l+i)->dtll*STRIDE;j++){
+			*((o->l+i)->dtl+j)=_float(*((o->l+i)->dtl+j));
+		}
+		for (uint32_t j=0;j<(o->l+i)->ill;j++){
+			*((o->l+i)->il+j)=_uint16_t(*((o->l+i)->il+j));
+		}
+		for (uint8_t j=0;j<(o->l+i)->bl;j++){
+			*((o->l+i)->b+j)=_load_model_bone(f);
+		}
+		(o->l+i)->_vb=NULL;
+		(o->l+i)->_ib=NULL;
+		GEngine_update_model(o,i);
 	}
 	fclose(f);
-	o->_vb=NULL;
-	o->_ib=NULL;
-	GEngine_update_model(o);
 	return o;
 }
 
 
 
-void GEngine_update_model(Model m){
+void GEngine_update_model(Model m,uint8_t i){
+	float* dtl=memcpy(malloc((m->l+i)->dtll*sizeof(float)*STRIDE),(m->l+i)->dtl,(m->l+i)->dtll*sizeof(float)*STRIDE);
+	for (uint8_t j=0;j<(m->l+i)->bl;j++){
+		float t[]={0,0,0,0,0,0};
+		_deform_skin((m->l+i)->b+j,t,dtl);
+	}
 	D3D11_BUFFER_DESC bd={
-		m->dtll*sizeof(float),
+		(m->l+i)->dtll*sizeof(float)*STRIDE,
 		D3D11_USAGE_DEFAULT,
 		D3D11_BIND_VERTEX_BUFFER,
 		0,
@@ -534,51 +543,59 @@ void GEngine_update_model(Model m){
 		0
 	};
 	D3D11_SUBRESOURCE_DATA dt={
-		m->dtl,
+		dtl,
 		0,
 		0
 	};
-	HRESULT hr=ID3D11Device_CreateBuffer(_d3_d,&bd,&dt,&m->_vb);
+	HRESULT hr=ID3D11Device_CreateBuffer(_d3_d,&bd,&dt,&(m->l+i)->_vb);
+	free(dtl);
 	if (FAILED(hr)){
-		printf("ERR4\n");
+		printf("ERR4_\n");
 		return;
 	}
 	bd.Usage=D3D11_USAGE_DEFAULT;
-	bd.ByteWidth=m->ill*sizeof(uint16_t);
+	bd.ByteWidth=(m->l+i)->ill*sizeof(uint16_t);
 	bd.BindFlags=D3D11_BIND_INDEX_BUFFER;
 	bd.CPUAccessFlags=0;
-	dt.pSysMem=m->il;
-	hr=ID3D11Device_CreateBuffer(_d3_d,&bd,&dt,&m->_ib);
+	dt.pSysMem=(m->l+i)->il;
+	hr=ID3D11Device_CreateBuffer(_d3_d,&bd,&dt,&(m->l+i)->_ib);
 	if (FAILED(hr)){
-		printf("ERR5\n");
+		printf("ERR5_\n");
 		return;
 	}
 }
 
 
 
-void GEngine_draw_model(Model m){
+void GEngine_draw_model(Model m,uint8_t i){
+	struct SHADER_DATA sdt={
+		SHADER_DATA_TYPE_CONSTANT_BUFFER,
+		(m->l+i)->m_cb,
+		m->sl,
+		SHADER_DATA_FLAG_VS|SHADER_DATA_FLAG_PS
+	};
+	GEngine_set_shader_data(&sdt);
 	unsigned int off=0;
-	unsigned int st=8*sizeof(float);
-	ID3D11DeviceContext_IASetVertexBuffers(_d3_dc,0,1,&m->_vb,&st,&off);
-	ID3D11DeviceContext_IASetIndexBuffer(_d3_dc,m->_ib,DXGI_FORMAT_R16_UINT,0);
+	unsigned int st=STRIDE*sizeof(float);
+	ID3D11DeviceContext_IASetVertexBuffers(_d3_dc,0,1,&(m->l+i)->_vb,&st,&off);
+	ID3D11DeviceContext_IASetIndexBuffer(_d3_dc,(m->l+i)->_ib,DXGI_FORMAT_R16_UINT,0);
 	ID3D11DeviceContext_IASetPrimitiveTopology(_d3_dc,D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	ID3D11DeviceContext_DrawIndexed(_d3_dc,m->ill,0,0);
+	ID3D11DeviceContext_DrawIndexed(_d3_dc,(m->l+i)->ill,0,0);
 }
 
 
 
-void GEngine_draw_model_bones(Model m){
-	uint32_t vll=0;
-	float* vl=NULL;
+void GEngine_draw_model_bones(Model m,uint8_t i){
+	uint32_t dtll=0;
+	float* dtl=NULL;
 	uint32_t ill=0;
 	uint16_t* il=NULL;
-	for (uint8_t i=0;i<m->bl;i++){
+	for (uint8_t i=0;i<(m->l+i)->bl;i++){
 		float t[]={0,0,0,0,0,0};
-		_draw_model_bones(m->b+i,t,&vll,&vl,&ill,&il);
+		_draw_model_bones((m->l+i)->b+i,t,&dtll,&dtl,&ill,&il);
 	}
 	D3D11_BUFFER_DESC bd={
-		vll*sizeof(float),
+		dtll*sizeof(float),
 		D3D11_USAGE_DEFAULT,
 		D3D11_BIND_VERTEX_BUFFER,
 		0,
@@ -586,7 +603,7 @@ void GEngine_draw_model_bones(Model m){
 		0
 	};
 	D3D11_SUBRESOURCE_DATA dt={
-		vl,
+		dtl,
 		0,
 		0
 	};
@@ -611,10 +628,42 @@ void GEngine_draw_model_bones(Model m){
 	unsigned int st=7*sizeof(float);
 	ID3D11DeviceContext_IASetVertexBuffers(_d3_dc,0,1,&vb,&st,&off);
 	ID3D11DeviceContext_IASetIndexBuffer(_d3_dc,ib,DXGI_FORMAT_R16_UINT,0);
-	ID3D11DeviceContext_IASetPrimitiveTopology(_d3_dc,D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	ID3D11DeviceContext_IASetPrimitiveTopology(_d3_dc,D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 	ID3D11DeviceContext_DrawIndexed(_d3_dc,ill,0,0);
-	free(vl);
+	free(dtl);
 	free(il);
+}
+
+
+
+Animation GEngine_load_animation(const char* fp){
+	assert(0);
+	return NULL;
+}
+
+
+
+Animator GEngine_create_animator(Model m){
+	Animator o=malloc(sizeof(struct _ANIMATOR));
+	o->m=m;
+	o->a=NULL;
+	o->_c=true;
+	o->_f=0;
+	return o;
+}
+
+
+
+void GEngine_set_animation(Animator a,Animation an){
+	a->a=an;
+	a->_c=(a->a->d>0?false:true);
+	a->_f=0;
+}
+
+
+
+void GEngine_update_animator(Animator a,float dt){
+	//
 }
 
 

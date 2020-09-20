@@ -22,7 +22,7 @@ del *.idb
 del *.h
 xcopy ..\rsrc .\rsrc /SEYI
 cls
-strace g_engine.exe
+g_engine.exe
 :end
 cd ../
 set INCLUDE=%_INCLUDE%

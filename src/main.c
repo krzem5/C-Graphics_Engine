@@ -12,6 +12,8 @@ struct VertexShaderInput{
 	RawMatrix wm;
 	RawMatrix cm;
 	RawMatrix pm;
+	RawVector cp;
+	RawVector lp;
 };
 
 
@@ -92,6 +94,8 @@ Matrix pm;
 Camera c;
 ObjectBuffer ob;
 Model m;
+Animation ia;
+Animator an;
 
 
 
@@ -109,7 +113,9 @@ void init(void){
 	wm=GEngine_identity_matrix();
 	pm=GEngine_perspective_fov_matrix(GENGINE_PIDIV2,GEngine_aspect_ratio(),0.01f,1000);
 	ob=GEngine_box_object_buffer();
-	m=GEngine_load_model("rsrc\\ybot.mdl");
+	m=GEngine_load_model("rsrc\\ybot.mdl",1);
+	ia=GEngine_load_animation("rsrc\\falling to roll.anm");
+	an=GEngine_create_animator(m);
 }
 
 
@@ -122,19 +128,28 @@ void render(double dt){
 	if (cm==NULL){
 		return;
 	}
+	GEngine_update_animator(an,(float)(dt*1e-6));
+	if (GEngine_animation_finished(an)==true){
+		GEngine_set_animation(an,ia);
+	}
 	wm=GEngine_y_rotation_matrix((float)(t/1000));
 	struct VertexShaderInput cb1={
 		GEngine_as_raw_matrix(wm),
 		GEngine_as_raw_matrix(cm),
-		GEngine_as_raw_matrix(pm)
+		GEngine_as_raw_matrix(pm),
+		GEngine_pos_from_camera(c),
+		GEngine_raw_vector(-1000,-1000,-1000,1)
 	};
 	GEngine_update_constant_buffer(cb,&cb1);
 	GEngine_use_vertex_shader(vs);
 	GEngine_use_pixel_shader(ps);
 	GEngine_draw_object_buffer(ob);
-	// GEngine_use_vertex_shader(vs_tex);
-	// GEngine_use_pixel_shader(ps_tex);
-	GEngine_draw_model_bones(m);
+	GEngine_draw_model_bones(m,0);
+	// GEngine_draw_model_bones(m,1);
+	GEngine_use_vertex_shader(vs_tex);
+	GEngine_use_pixel_shader(ps_tex);
+	GEngine_draw_model(m,0);
+	GEngine_draw_model(m,1);
 	if (GEngine_is_pressed(0x1b)==true){
 		GEngine_close();
 	}
