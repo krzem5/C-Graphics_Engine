@@ -95,6 +95,7 @@ Camera c;
 ObjectBuffer ob;
 Model m;
 Animation ia;
+Animation ftra;
 Animator an;
 
 
@@ -115,6 +116,7 @@ void init(void){
 	ob=GEngine_box_object_buffer();
 	m=GEngine_load_model("rsrc\\ybot.mdl",1);
 	ia=GEngine_load_animation("rsrc\\idle.anm",m);
+	ftra=GEngine_load_animation("rsrc\\falling to roll.anm",m);
 	an=GEngine_create_animator(m);
 }
 
@@ -128,11 +130,16 @@ void render(double dt){
 	if (cm==NULL){
 		return;
 	}
+	static bool ap=false;
 	GEngine_update_animator(an,(float)(dt*1e-6));
 	if (GEngine_animation_finished(an)==true){
+		ap=false;
 		GEngine_set_animation(an,ia);
 	}
-	wm=GEngine_y_rotation_matrix((float)(t/1000));
+	if (GEngine_is_pressed(0x26)==true&&ap==false){
+		GEngine_set_animation(an,ftra);
+		ap=true;
+	}
 	struct VertexShaderInput cb1={
 		GEngine_as_raw_matrix(wm),
 		GEngine_as_raw_matrix(cm),
@@ -145,14 +152,14 @@ void render(double dt){
 	GEngine_use_pixel_shader(ps);
 	GEngine_draw_object_buffer(ob);
 	GEngine_draw_model_bones(m,0);
-	// GEngine_draw_model_bones(m,1);
 	GEngine_use_vertex_shader(vs_tex);
 	GEngine_use_pixel_shader(ps_tex);
-	GEngine_draw_model(m,0);
+	// GEngine_draw_model(m,0);
 	GEngine_draw_model(m,1);
 	if (GEngine_is_pressed(0x1b)==true){
 		GEngine_close();
 	}
+	GEngine_free_matrix(cm);
 }
 
 

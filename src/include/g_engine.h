@@ -17,6 +17,7 @@
 #define GENGINE_1DIVPI ((float)0.318309886f)
 #define GENGINE_1DIV2PI ((float)0.159154943f)
 #define GENGINE_PIDIV180 ((float)0.017453293f)
+#define GENGINE_60_FPS ((float)0.016666666f)
 #ifdef NULL
 #undef NULL
 #endif
@@ -161,6 +162,7 @@ struct _MODEL_BONE{
 	char* nm;
 	float l;
 	float* d;
+	float* __d;
 	float* tm;
 	float* dt;
 	uint32_t wil;
@@ -190,6 +192,7 @@ struct _MODEL_LAYER{
 
 struct _MODEL{
 	char* nm;
+	float* t;
 	uint8_t ll;
 	struct _MODEL_LAYER* l;
 	uint8_t sl;
@@ -231,7 +234,7 @@ struct _ANIMATION_BONE{
 struct _ANIMATION{
 	char* nm;
 	uint16_t d;
-	uint8_t bl;
+	uint16_t bl;
 	struct _ANIMATION_BONE* b;
 };
 
@@ -242,6 +245,7 @@ struct _ANIMATOR{
 	Animation a;
 	bool _c;
 	uint16_t _f;
+	float _lt;
 };
 
 
