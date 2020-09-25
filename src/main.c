@@ -154,7 +154,7 @@ void render(double dt){
 	GEngine_draw_model_bones(m,0);
 	GEngine_use_vertex_shader(vs_tex);
 	GEngine_use_pixel_shader(ps_tex);
-	// GEngine_draw_model(m,0);
+	GEngine_draw_model(m,0);
 	GEngine_draw_model(m,1);
 	if (GEngine_is_pressed(0x1b)==true){
 		GEngine_close();

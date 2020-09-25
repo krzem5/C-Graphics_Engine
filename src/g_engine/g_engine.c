@@ -252,6 +252,296 @@ void _mult_tr_matrix(float* nt,float* tm,float* d,float* o){
 	float ew3=cw1*dx3+cw2*dy3+cw3*dz3+cw4*dw3;
 	float ew4=cw1*dx4+cw2*dy4+cw3*dz4+cw4*dw4;
 
+	if (tm==NULL){
+		*nt=ex1;
+		*(nt+1)=ex2;
+		*(nt+2)=ex3;
+		*(nt+3)=ex4;
+
+		*(nt+4)=ey1;
+		*(nt+5)=ey2;
+		*(nt+6)=ey3;
+		*(nt+7)=ey4;
+
+		*(nt+8)=ez1;
+		*(nt+9)=ez2;
+		*(nt+10)=ez3;
+		*(nt+11)=ez4;
+
+		*(nt+12)=ew1;
+		*(nt+13)=ew2;
+		*(nt+14)=ew3;
+		*(nt+15)=ew4;
+	}
+	else{
+		float fx1=*nt;
+		float fx2=*(nt+1);
+		float fx3=*(nt+2);
+		float fx4=*(nt+3);
+
+		float fy1=*(nt+4);
+		float fy2=*(nt+5);
+		float fy3=*(nt+6);
+		float fy4=*(nt+7);
+
+		float fz1=*(nt+8);
+		float fz2=*(nt+9);
+		float fz3=*(nt+10);
+		float fz4=*(nt+11);
+
+		float fw1=*(nt+12);
+		float fw2=*(nt+13);
+		float fw3=*(nt+14);
+		float fw4=*(nt+15);
+
+		float gx1=ex1*fx1+ex2*fy1+ex3*fz1+ex4*fw1;
+		float gx2=ex1*fx2+ex2*fy2+ex3*fz2+ex4*fw2;
+		float gx3=ex1*fx3+ex2*fy3+ex3*fz3+ex4*fw3;
+		float gx4=ex1*fx4+ex2*fy4+ex3*fz4+ex4*fw4;
+
+		float gy1=ey1*fx1+ey2*fy1+ey3*fz1+ey4*fw1;
+		float gy2=ey1*fx2+ey2*fy2+ey3*fz2+ey4*fw2;
+		float gy3=ey1*fx3+ey2*fy3+ey3*fz3+ey4*fw3;
+		float gy4=ey1*fx4+ey2*fy4+ey3*fz4+ey4*fw4;
+
+		float gz1=ez1*fx1+ez2*fy1+ez3*fz1+ez4*fw1;
+		float gz2=ez1*fx2+ez2*fy2+ez3*fz2+ez4*fw2;
+		float gz3=ez1*fx3+ez2*fy3+ez3*fz3+ez4*fw3;
+		float gz4=ez1*fx4+ez2*fy4+ez3*fz4+ez4*fw4;
+
+		float gw1=ew1*fx1+ew2*fy1+ew3*fz1+ew4*fw1;
+		float gw2=ew1*fx2+ew2*fy2+ew3*fz2+ew4*fw2;
+		float gw3=ew1*fx3+ew2*fy3+ew3*fz3+ew4*fw3;
+		float gw4=ew1*fx4+ew2*fy4+ew3*fz4+ew4*fw4;
+
+		*nt=gx1;
+		*(nt+1)=gx2;
+		*(nt+2)=gx3;
+		*(nt+3)=gx4;
+
+		*(nt+4)=gy1;
+		*(nt+5)=gy2;
+		*(nt+6)=gy3;
+		*(nt+7)=gy4;
+
+		*(nt+8)=gz1;
+		*(nt+9)=gz2;
+		*(nt+10)=gz3;
+		*(nt+11)=gz4;
+
+		*(nt+12)=gw1;
+		*(nt+13)=gw2;
+		*(nt+14)=gw3;
+		*(nt+15)=gw4;
+	}
+
+	if (o!=NULL){
+		float ox=*o;
+		float oy=*(o+1);
+		float oz=*(o+2);
+		*o=*nt*ox+*(nt+1)*oy+*(nt+2)*oz+*(nt+3);
+		*(o+1)=*(nt+4)*ox+*(nt+5)*oy+*(nt+6)*oz+*(nt+7);
+		*(o+2)=*(nt+8)*ox+*(nt+9)*oy+*(nt+10)*oz+*(nt+11);
+	}
+}
+
+
+
+void _mult_tr_matrix_inv(float* nt,float* tm,float* d){
+	assert(tm==NULL);
+	float sa=sinf(*(d+5));
+	float ca=cosf(*(d+5));
+	float sb=sinf(*(d+4));
+	float cb=cosf(*(d+4));
+	float sc=sinf(*(d+3));
+	float cc=cosf(*(d+3));
+
+	float ax1=*nt;
+	float ax2=*(nt+1);
+	float ax3=*(nt+2);
+	float ax4=*(nt+3);
+
+	float ay1=*(nt+4);
+	float ay2=*(nt+5);
+	float ay3=*(nt+6);
+	float ay4=*(nt+7);
+
+	float az1=*(nt+8);
+	float az2=*(nt+9);
+	float az3=*(nt+10);
+	float az4=*(nt+11);
+
+	float aw1=*(nt+12);
+	float aw2=*(nt+13);
+	float aw3=*(nt+14);
+	float aw4=*(nt+15);
+
+	float bx1_=1;
+	float bx2_=0;
+	float bx3_=0;
+	float bx4_=*d;
+
+	float by1_=0;
+	float by2_=1;
+	float by3_=0;
+	float by4_=*(d+1);
+
+	float bz1_=0;
+	float bz2_=0;
+	float bz3_=1;
+	float bz4_=*(d+2);
+
+	float bw1_=0;
+	float bw2_=0;
+	float bw3_=0;
+	float bw4_=1;
+
+	float bx1=by2_*bz3_*bw4_-by2_*bz4_*bw3_-bz2_*by3_*bw4_+bz2_*by4_*bw3_+bw2_*by3_*bz4_-bw2_*by4_*bz3_;
+	float bx2=-bx2_*bz3_*bw4_+bx2_*bz4_*bw3_+bz2_*bx3_*bw4_-bz2_*bx4_*bw3_-bw2_*bx3_*bz4_+bw2_*bx4_*bz3_;
+	float bx3=bx2_*by3_*bw4_-bx2_*by4_*bw3_-by2_*bx3_*bw4_+by2_*bx4_*bw3_+bw2_*bx3_*by4_-bw2_*bx4_*by3_;
+	float bx4=-bx2_*by3_*bz4_+bx2_*by4_*bz3_+by2_*bx3_*bz4_-by2_*bx4_*bz3_-bz2_*bx3_*by4_+bz2_*bx4_*by3_;
+
+	float by1=-by1_*bz3_*bw4_+by1_*bz4_*bw3_+bz1_*by3_*bw4_-bz1_*by4_*bw3_-bw1_*by3_*bz4_+bw1_*by4_*bz3_;
+	float by2=bx1_*bz3_*bw4_-bx1_*bz4_*bw3_-bz1_*bx3_*bw4_+bz1_*bx4_*bw3_+bw1_*bx3_*bz4_-bw1_*bx4_*bz3_;
+	float by3=-bx1_*by3_*bw4_+bx1_*by4_*bw3_+by1_*bx3_*bw4_-by1_*bx4_*bw3_-bw1_*bx3_*by4_+bw1_*bx4_*by3_;
+	float by4=bx1_*by3_*bz4_-bx1_*by4_*bz3_-by1_*bx3_*bz4_+by1_*bx4_*bz3_+bz1_*bx3_*by4_-bz1_*bx4_*by3_;
+
+	float bz1=by1_*bz2_*bw4_-by1_*bz4_*bw2_-bz1_*by2_*bw4_+bz1_*by4_*bw2_+bw1_*by2_*bz4_-bw1_*by4_*bz2_;
+	float bz2=-bx1_*bz2_*bw4_+bx1_*bz4_*bw2_+bz1_*bx2_*bw4_-bz1_*bx4_*bw2_-bw1_*bx2_*bz4_+bw1_*bx4_*bz2_;
+	float bz3=bx1_*by2_*bw4_-bx1_*by4_*bw2_-by1_*bx2_*bw4_+by1_*bx4_*bw2_+bw1_*bx2_*by4_-bw1_*bx4_*by2_;
+	float bz4=-bx1_*by2_*bz4_+bx1_*by4_*bz2_+by1_*bx2_*bz4_-by1_*bx4_*bz2_-bz1_*bx2_*by4_+bz1_*bx4_*by2_;
+
+	float bw1=-by1_*bz2_*bw3_+by1_*bz3_*bw2_+bz1_*by2_*bw3_-bz1_*by3_*bw2_-bw1_*by2_*bz3_+bw1_*by3_*bz2_;
+	float bw2=bx1_*bz2_*bw3_-bx1_*bz3_*bw2_-bz1_*bx2_*bw3_+bz1_*bx3_*bw2_+bw1_*bx2_*bz3_-bw1_*bx3_*bz2_;
+	float bw3=-bx1_*by2_*bw3_+bx1_*by3_*bw2_+by1_*bx2_*bw3_-by1_*bx3_*bw2_-bw1_*bx2_*by3_+bw1_*bx3_*by2_;
+	float bw4=bx1_*by2_*bz3_-bx1_*by3_*bz2_-by1_*bx2_*bz3_+by1_*bx3_*bz2_+bz1_*bx2_*by3_-bz1_*bx3_*by2_;
+
+	float bd=bx1_*bx1+bx2_*by1+bx3_*bz1+bx4_*bw1;
+	assert(bd!=0);
+
+	bx1/=bd;
+	bx2/=bd;
+	bx3/=bd;
+	bx4/=bd;
+
+	by1/=bd;
+	by2/=bd;
+	by3/=bd;
+	by4/=bd;
+
+	bz1/=bd;
+	bz2/=bd;
+	bz3/=bd;
+	bz4/=bd;
+
+	bw1/=bd;
+	bw2/=bd;
+	bw3/=bd;
+	bw4/=bd;
+
+	float cx1=ax1*bx1+ax2*by1+ax3*bz1+ax4*bw1;
+	float cx2=ax1*bx2+ax2*by2+ax3*bz2+ax4*bw2;
+	float cx3=ax1*bx3+ax2*by3+ax3*bz3+ax4*bw3;
+	float cx4=ax1*bx4+ax2*by4+ax3*bz4+ax4*bw4;
+
+	float cy1=ay1*bx1+ay2*by1+ay3*bz1+ay4*bw1;
+	float cy2=ay1*bx2+ay2*by2+ay3*bz2+ay4*bw2;
+	float cy3=ay1*bx3+ay2*by3+ay3*bz3+ay4*bw3;
+	float cy4=ay1*bx4+ay2*by4+ay3*bz4+ay4*bw4;
+
+	float cz1=az1*bx1+az2*by1+az3*bz1+az4*bw1;
+	float cz2=az1*bx2+az2*by2+az3*bz2+az4*bw2;
+	float cz3=az1*bx3+az2*by3+az3*bz3+az4*bw3;
+	float cz4=az1*bx4+az2*by4+az3*bz4+az4*bw4;
+
+	float cw1=aw1*bx1+aw2*by1+aw3*bz1+aw4*bw1;
+	float cw2=aw1*bx2+aw2*by2+aw3*bz2+aw4*bw2;
+	float cw3=aw1*bx3+aw2*by3+aw3*bz3+aw4*bw3;
+	float cw4=aw1*bx4+aw2*by4+aw3*bz4+aw4*bw4;
+
+	float dx1_=ca*cb;
+	float dx2_=ca*sb*sc-sa*cc;
+	float dx3_=ca*sb*cc+sa*sc;
+	float dx4_=0;
+
+	float dy1_=sa*cb;
+	float dy2_=sa*sb*sc+ca*cc;
+	float dy3_=sa*sb*cc-ca*sc;
+	float dy4_=0;
+
+	float dz1_=-sb;
+	float dz2_=cb*sc;
+	float dz3_=cb*cc;
+	float dz4_=0;
+
+	float dw1_=0;
+	float dw2_=0;
+	float dw3_=0;
+	float dw4_=1;
+
+	float dx1=dy2_*dz3_*dw4_-dy2_*dz4_*dw3_-dz2_*dy3_*dw4_+dz2_*dy4_*dw3_+dw2_*dy3_*dz4_-dw2_*dy4_*dz3_;
+	float dx2=-dx2_*dz3_*dw4_+dx2_*dz4_*dw3_+dz2_*dx3_*dw4_-dz2_*dx4_*dw3_-dw2_*dx3_*dz4_+dw2_*dx4_*dz3_;
+	float dx3=dx2_*dy3_*dw4_-dx2_*dy4_*dw3_-dy2_*dx3_*dw4_+dy2_*dx4_*dw3_+dw2_*dx3_*dy4_-dw2_*dx4_*dy3_;
+	float dx4=-dx2_*dy3_*dz4_+dx2_*dy4_*dz3_+dy2_*dx3_*dz4_-dy2_*dx4_*dz3_-dz2_*dx3_*dy4_+dz2_*dx4_*dy3_;
+
+	float dy1=-dy1_*dz3_*dw4_+dy1_*dz4_*dw3_+dz1_*dy3_*dw4_-dz1_*dy4_*dw3_-dw1_*dy3_*dz4_+dw1_*dy4_*dz3_;
+	float dy2=dx1_*dz3_*dw4_-dx1_*dz4_*dw3_-dz1_*dx3_*dw4_+dz1_*dx4_*dw3_+dw1_*dx3_*dz4_-dw1_*dx4_*dz3_;
+	float dy3=-dx1_*dy3_*dw4_+dx1_*dy4_*dw3_+dy1_*dx3_*dw4_-dy1_*dx4_*dw3_-dw1_*dx3_*dy4_+dw1_*dx4_*dy3_;
+	float dy4=dx1_*dy3_*dz4_-dx1_*dy4_*dz3_-dy1_*dx3_*dz4_+dy1_*dx4_*dz3_+dz1_*dx3_*dy4_-dz1_*dx4_*dy3_;
+
+	float dz1=dy1_*dz2_*dw4_-dy1_*dz4_*dw2_-dz1_*dy2_*dw4_+dz1_*dy4_*dw2_+dw1_*dy2_*dz4_-dw1_*dy4_*dz2_;
+	float dz2=-dx1_*dz2_*dw4_+dx1_*dz4_*dw2_+dz1_*dx2_*dw4_-dz1_*dx4_*dw2_-dw1_*dx2_*dz4_+dw1_*dx4_*dz2_;
+	float dz3=dx1_*dy2_*dw4_-dx1_*dy4_*dw2_-dy1_*dx2_*dw4_+dy1_*dx4_*dw2_+dw1_*dx2_*dy4_-dw1_*dx4_*dy2_;
+	float dz4=-dx1_*dy2_*dz4_+dx1_*dy4_*dz2_+dy1_*dx2_*dz4_-dy1_*dx4_*dz2_-dz1_*dx2_*dy4_+dz1_*dx4_*dy2_;
+
+	float dw1=-dy1_*dz2_*dw3_+dy1_*dz3_*dw2_+dz1_*dy2_*dw3_-dz1_*dy3_*dw2_-dw1_*dy2_*dz3_+dw1_*dy3_*dz2_;
+	float dw2=dx1_*dz2_*dw3_-dx1_*dz3_*dw2_-dz1_*dx2_*dw3_+dz1_*dx3_*dw2_+dw1_*dx2_*dz3_-dw1_*dx3_*dz2_;
+	float dw3=-dx1_*dy2_*dw3_+dx1_*dy3_*dw2_+dy1_*dx2_*dw3_-dy1_*dx3_*dw2_-dw1_*dx2_*dy3_+dw1_*dx3_*dy2_;
+	float dw4=dx1_*dy2_*dz3_-dx1_*dy3_*dz2_-dy1_*dx2_*dz3_+dy1_*dx3_*dz2_+dz1_*dx2_*dy3_-dz1_*dx3_*dy2_;
+
+	float dd=dx1_*dx1+dx2_*dy1+dx3_*dz1+dx4_*dw1;
+	assert(dd!=0);
+
+	dx1/=dd;
+	dx2/=dd;
+	dx3/=dd;
+	dx4/=dd;
+
+	dy1/=dd;
+	dy2/=dd;
+	dy3/=dd;
+	dy4/=dd;
+
+	dz1/=dd;
+	dz2/=dd;
+	dz3/=dd;
+	dz4/=dd;
+
+	dw1/=dd;
+	dw2/=dd;
+	dw3/=dd;
+	dw4/=dd;
+
+	float ex1=cx1*dx1+cx2*dy1+cx3*dz1+cx4*dw1;
+	float ex2=cx1*dx2+cx2*dy2+cx3*dz2+cx4*dw2;
+	float ex3=cx1*dx3+cx2*dy3+cx3*dz3+cx4*dw3;
+	float ex4=cx1*dx4+cx2*dy4+cx3*dz4+cx4*dw4;
+
+	float ey1=cy1*dx1+cy2*dy1+cy3*dz1+cy4*dw1;
+	float ey2=cy1*dx2+cy2*dy2+cy3*dz2+cy4*dw2;
+	float ey3=cy1*dx3+cy2*dy3+cy3*dz3+cy4*dw3;
+	float ey4=cy1*dx4+cy2*dy4+cy3*dz4+cy4*dw4;
+
+	float ez1=cz1*dx1+cz2*dy1+cz3*dz1+cz4*dw1;
+	float ez2=cz1*dx2+cz2*dy2+cz3*dz2+cz4*dw2;
+	float ez3=cz1*dx3+cz2*dy3+cz3*dz3+cz4*dw3;
+	float ez4=cz1*dx4+cz2*dy4+cz3*dz4+cz4*dw4;
+
+	float ew1=cw1*dx1+cw2*dy1+cw3*dz1+cw4*dw1;
+	float ew2=cw1*dx2+cw2*dy2+cw3*dz2+cw4*dw2;
+	float ew3=cw1*dx3+cw2*dy3+cw3*dz3+cw4*dw3;
+	float ew4=cw1*dx4+cw2*dy4+cw3*dz4+cw4*dw4;
+
 	*nt=ex1;
 	*(nt+1)=ex2;
 	*(nt+2)=ex3;
@@ -271,80 +561,145 @@ void _mult_tr_matrix(float* nt,float* tm,float* d,float* o){
 	*(nt+13)=ew2;
 	*(nt+14)=ew3;
 	*(nt+15)=ew4;
-
-	if (o!=NULL){
-		float ox=*o;
-		float oy=*(o+1);
-		float oz=*(o+2);
-		*o=*(nt+0)*ox+*(nt+1)*oy+*(nt+2)*oz+*(nt+3);
-		*(o+1)=*(nt+4)*ox+*(nt+5)*oy+*(nt+6)*oz+*(nt+7);
-		*(o+2)=*(nt+8)*ox+*(nt+9)*oy+*(nt+10)*oz+*(nt+11);
-	}
 }
 
 
 
-void _rot_vec(float* x,float* y,float* z,float* r){
-	float sa=sinf(-*(r+5));
-	float ca=cosf(-*(r+5));
-	float sb=sinf(-*(r+4));
-	float cb=cosf(-*(r+4));
-	float sc=sinf(-*(r+3));
-	float cc=cosf(-*(r+3));
+void _check_mlt(float* a,float* b){
+	float ax1=*a;
+	float ax2=*(a+1);
+	float ax3=*(a+2);
+	float ax4=*(a+3);
 
-	float ax1=ca*cb;
-	float ax2=ca*sb*sc-sa*cc;
-	float ax3=ca*sb*cc+sa*sc;
-	float ax4=0;
+	float ay1=*(a+4);
+	float ay2=*(a+5);
+	float ay3=*(a+6);
+	float ay4=*(a+7);
 
-	float ay1=sa*cb;
-	float ay2=sa*sb*sc+ca*cc;
-	float ay3=sa*sb*cc-ca*sc;
-	float ay4=0;
+	float az1=*(a+8);
+	float az2=*(a+9);
+	float az3=*(a+10);
+	float az4=*(a+11);
 
-	float az1=-sb;
-	float az2=cb*sc;
-	float az3=cb*cc;
-	float az4=0;
+	float aw1=*(a+12);
+	float aw2=*(a+13);
+	float aw3=*(a+14);
+	float aw4=*(a+15);
 
-	float aw1=0;
-	float aw2=0;
-	float aw3=0;
-	float aw4=1;
+	float bx1=*b;
+	float bx2=*(b+1);
+	float bx3=*(b+2);
+	float bx4=*(b+3);
 
+	float by1=*(b+4);
+	float by2=*(b+5);
+	float by3=*(b+6);
+	float by4=*(b+7);
+
+	float bz1=*(b+8);
+	float bz2=*(b+9);
+	float bz3=*(b+10);
+	float bz4=*(b+11);
+
+	float bw1=*(b+12);
+	float bw2=*(b+13);
+	float bw3=*(b+14);
+	float bw4=*(b+15);
+
+	float cx1=ax1*bx1+ax2*by1+ax3*bz1+ax4*bw1;
+	float cx2=ax1*bx2+ax2*by2+ax3*bz2+ax4*bw2;
+	float cx3=ax1*bx3+ax2*by3+ax3*bz3+ax4*bw3;
+	float cx4=ax1*bx4+ax2*by4+ax3*bz4+ax4*bw4;
+
+	float cy1=ay1*bx1+ay2*by1+ay3*bz1+ay4*bw1;
+	float cy2=ay1*bx2+ay2*by2+ay3*bz2+ay4*bw2;
+	float cy3=ay1*bx3+ay2*by3+ay3*bz3+ay4*bw3;
+	float cy4=ay1*bx4+ay2*by4+ay3*bz4+ay4*bw4;
+
+	float cz1=az1*bx1+az2*by1+az3*bz1+az4*bw1;
+	float cz2=az1*bx2+az2*by2+az3*bz2+az4*bw2;
+	float cz3=az1*bx3+az2*by3+az3*bz3+az4*bw3;
+	float cz4=az1*bx4+az2*by4+az3*bz4+az4*bw4;
+
+	float cw1=aw1*bx1+aw2*by1+aw3*bz1+aw4*bw1;
+	float cw2=aw1*bx2+aw2*by2+aw3*bz2+aw4*bw2;
+	float cw3=aw1*bx3+aw2*by3+aw3*bz3+aw4*bw3;
+	float cw4=aw1*bx4+aw2*by4+aw3*bz4+aw4*bw4;
+
+	// printf("%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n\n",ax1,ax2,ax3,ax4,ay1,ay2,ay3,ay4,az1,az2,az3,az4,aw1,aw2,aw3,aw4);
+
+	// printf("%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n\n",bx1,bx2,bx3,bx4,by1,by2,by3,by4,bz1,bz2,bz3,bz4,bw1,bw2,bw3,bw4);
+
+	printf("%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n\n",cx1,cx2,cx3,cx4,cy1,cy2,cy3,cy4,cz1,cz2,cz3,cz4,cw1,cw2,cw3,cw4);
+
+	assert(cx1==1.0f);
+	assert(-1e-7<cx2&&cx2<1e-7);
+	assert(-1e-7<cx3&&cx3<1e-7);
+	assert(-1e-7<cx4&&cx4<1e-7);
+
+	assert(-1e-7<cy1&&cy1<1e-7);
+	assert(cy2==1.0f);
+	assert(-1e-7<cy3&&cy3<1e-7);
+	assert(-1e-7<cy4&&cy4<1e-7);
+
+	assert(-1e-7<cz1&&cz1<1e-7);
+	assert(-1e-7<cz2&&cz2<1e-7);
+	assert(cz3==1.0f);
+	assert(-1e-7<cz4&&cz4<1e-7);
+
+	assert(-1e-7<cw1&&cw1<1e-7);
+	assert(-1e-7<cw2&&cw2<1e-7);
+	assert(-1e-7<cw3&&cw3<1e-7);
+	assert(cw4==1.0f);
+}
+
+
+
+void _mlt_vec(float* x,float* y,float* z,float* m){
 	float tx=*x;
 	float ty=*y;
 	float tz=*z;
-
-	*x=ax1*tx+ax2*ty+ax3*tz+ax4;
-	*y=ay1*tx+ay2*ty+ay3*tz+ay4;
-	*z=az1*tx+az2*ty+az3*tz+az4;
+	*x=(*m)*tx+(*(m+1))*ty+(*(m+2))*tz+(*(m+3));
+	*y=(*(m+4))*tx+(*(m+5))*ty+(*(m+6))*tz+(*(m+7));
+	*z=(*(m+8))*tx+(*(m+9))*ty+(*(m+10))*tz+(*(m+11));
 }
 
 
 
-void _deform_skin(struct _MODEL_BONE* b,float* t,float* tb,float* dtl){
+void _deform_skin(struct _MODEL_BONE* b,float* t,float* tb,float* stl,float* dtl){
 	float* nt=memcpy(malloc(16*sizeof(float)),t,16*sizeof(float));
-	float* ntb=memcpy(malloc(6*sizeof(float)),tb,6*sizeof(float));
+	float* ntb=memcpy(malloc(16*sizeof(float)),tb,16*sizeof(float));
+	_mult_tr_matrix(nt,NULL,b->d,NULL);
+	_mult_tr_matrix_inv(ntb,NULL,b->d);
+	printf("MLT: %s\n",b->nm);
+	_check_mlt(nt,ntb);
 	for (uint32_t i=0;i<b->wil;i++){
-		// printf("%f %f %f\n",*ntb,*(ntb+1),*(ntb+2));
-		float x=*(dtl+*(b->il+i)*STRIDE)-*ntb;
-		float y=*(dtl+*(b->il+i)*STRIDE+1)-*(ntb+1);
-		float z=*(dtl+*(b->il+i)*STRIDE+2)-*(ntb+2);
-		_rot_vec(&x,&y,&z,ntb+3);
-		x/=b->l;
-		y/=b->l;
-		z/=b->l;
-		*(dtl+*(b->il+i)*STRIDE)=((*nt)*x+(*(nt+1))*y+(*(nt+2))*z+(*(nt+3)))*(*(b->wl+i));
-		*(dtl+*(b->il+i)*STRIDE+1)=((*(nt+4))*x+(*(nt+5))*y+(*(nt+6))*z+(*(nt+7)))*(*(b->wl+i));
-		*(dtl+*(b->il+i)*STRIDE+2)=((*(nt+8))*x+(*(nt+9))*y+(*(nt+10))*z+(*(nt+11)))*(*(b->wl+i));
+		float x=*(stl+*(b->il+i)*STRIDE);
+		float y=*(stl+*(b->il+i)*STRIDE+1);
+		float z=*(stl+*(b->il+i)*STRIDE+2);
+		_mlt_vec(&x,&y,&z,ntb);
+		// x/=b->l;
+		// y/=b->l;
+		// z/=b->l;
+		// printf("%f %f %f -> %f %f %f\n",*(stl+*(b->il+i)*STRIDE),*(stl+*(b->il+i)*STRIDE+1),*(stl+*(b->il+i)*STRIDE+2),x,y,z);
+		// *(dtl+*(b->il+i)*STRIDE)+=((*nt)*x+(*(nt+1))*y+(*(nt+2))*z+(*(nt+3)))*(*(b->wl+i));
+		// *(dtl+*(b->il+i)*STRIDE+1)+=((*(nt+4))*x+(*(nt+5))*y+(*(nt+6))*z+(*(nt+7)))*(*(b->wl+i));
+		// *(dtl+*(b->il+i)*STRIDE+2)+=((*(nt+8))*x+(*(nt+9))*y+(*(nt+10))*z+(*(nt+11)))*(*(b->wl+i));
+		*(dtl+*(b->il+i)*STRIDE)=(*nt)*x+(*(nt+1))*y+(*(nt+2))*z+(*(nt+3));
+		*(dtl+*(b->il+i)*STRIDE+1)=(*(nt+4))*x+(*(nt+5))*y+(*(nt+6))*z+(*(nt+7));
+		*(dtl+*(b->il+i)*STRIDE+2)=(*(nt+8))*x+(*(nt+9))*y+(*(nt+10))*z+(*(nt+11));
+		// printf("%f %f %f -> %f %f %f\n",x,y,z,*(dtl+*(b->il+i)*STRIDE),*(dtl+*(b->il+i)*STRIDE+1),*(dtl+*(b->il+i)*STRIDE+2));
+		// *(dtl+*(b->il+i)*STRIDE)=*(stl+*(b->il+i)*STRIDE);
+		// *(dtl+*(b->il+i)*STRIDE+1)=*(stl+*(b->il+i)*STRIDE+1);
+		// *(dtl+*(b->il+i)*STRIDE+2)=*(stl+*(b->il+i)*STRIDE+2);
+		// *(dtl+*(b->il+i)*STRIDE+3)=*(stl+*(b->il+i)*STRIDE+3);
+		// *(dtl+*(b->il+i)*STRIDE+4)=*(stl+*(b->il+i)*STRIDE+4);
+		// *(dtl+*(b->il+i)*STRIDE+5)=*(stl+*(b->il+i)*STRIDE+5);
+		// *(dtl+*(b->il+i)*STRIDE+6)=*(stl+*(b->il+i)*STRIDE+6);
+		// *(dtl+*(b->il+i)*STRIDE+7)=*(stl+*(b->il+i)*STRIDE+7);
 	}
-	for (uint8_t i=3;i<6;i++){
-		*(ntb+i)+=*(b->d+i);
-	}
-	_mult_tr_matrix(nt,NULL,b->d,ntb);
 	for (uint8_t i=0;i<b->cl;i++){
-		_deform_skin(b->c+i,nt,ntb,dtl);
+		_deform_skin(b->c+i,nt,ntb,stl,dtl);
 	}
 	free(ntb);
 	free(nt);
@@ -354,7 +709,7 @@ void _deform_skin(struct _MODEL_BONE* b,float* t,float* tb,float* dtl){
 
 void _draw_model_bones(struct _MODEL_BONE* b,float* t,float* bt,uint32_t* dtll,float** dtl,uint32_t* ill,uint16_t** il){
 	float* nt=memcpy(malloc(16*sizeof(float)),t,16*sizeof(float));
-	float* nbt=memcpy(malloc(6*sizeof(float)),bt,6*sizeof(float));
+	float* nbt=memcpy(malloc(3*sizeof(float)),bt,3*sizeof(float));
 	(*dtll)+=14;
 	(*ill)+=2;
 	*dtl=realloc(*dtl,(*dtll)*sizeof(float));
@@ -866,12 +1221,32 @@ Model GEngine_load_model(const char* fp,uint8_t sl){
 
 
 void GEngine_update_model(Model m,uint8_t i){
-	float* dtl=memcpy(malloc((m->l+i)->dtll*sizeof(float)*STRIDE),(m->l+i)->dtl,(m->l+i)->dtll*sizeof(float)*STRIDE);
+	float* stl=malloc((m->l+i)->dtll*sizeof(float)*STRIDE);
+	float* dtl=malloc((m->l+i)->dtll*sizeof(float)*STRIDE);
+	for (size_t j=0;j<(m->l+i)->dtll*STRIDE;j+=STRIDE){
+		*(stl+j)=*((m->l+i)->dtl+j);
+		*(stl+j+1)=*((m->l+i)->dtl+j+1);
+		*(stl+j+2)=*((m->l+i)->dtl+j+2);
+		*(stl+j+3)=*((m->l+i)->dtl+j+3);
+		*(stl+j+4)=*((m->l+i)->dtl+j+4);
+		*(stl+j+5)=*((m->l+i)->dtl+j+5);
+		*(stl+j+6)=*((m->l+i)->dtl+j+6);
+		*(stl+j+7)=*((m->l+i)->dtl+j+7);
+		*(dtl+j)=0;
+		*(dtl+j+1)=0;
+		*(dtl+j+2)=0;
+		*(dtl+j+3)=*((m->l+i)->dtl+j+3);
+		*(dtl+j+4)=*((m->l+i)->dtl+j+4);
+		*(dtl+j+5)=*((m->l+i)->dtl+j+5);
+		*(dtl+j+6)=*((m->l+i)->dtl+j+6);
+		*(dtl+j+7)=*((m->l+i)->dtl+j+7);
+	}
 	float t[]={1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
-	float bt[]={0,0,0,0,0,0};
-	_mult_tr_matrix(t,NULL,m->t,bt);
+	float bt[]={1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+	_mult_tr_matrix(t,NULL,m->t,NULL);
+	_mult_tr_matrix_inv(bt,NULL,m->t);
 	for (uint8_t j=0;j<(m->l+i)->bl;j++){
-		_deform_skin((m->l+i)->b+j,t,bt,dtl);
+		_deform_skin((m->l+i)->b+j,t,bt,stl,dtl);
 	}
 	D3D11_BUFFER_DESC bd={
 		(m->l+i)->dtll*sizeof(float)*STRIDE,
@@ -934,7 +1309,7 @@ void GEngine_draw_model_bones(Model m,uint8_t i){
 	for (uint8_t j=0;j<(m->l+i)->bl;j++){
 		for (uint8_t k=0;k<((m->l+i)->b+j)->cl;k++){
 			float* nt=memcpy(malloc(16*sizeof(float)),t,16*sizeof(float));
-			float nbt[]={0,0,0,0,0,0};
+			float nbt[]={0,0,0};
 			_mult_tr_matrix(nt,NULL,((m->l+i)->b+j)->d,nbt);
 			_draw_model_bones(((m->l+i)->b+j)->c+k,nt,nbt,&dtll,&dtl,&ill,&il);
 			free(nt);
@@ -1054,6 +1429,7 @@ void GEngine_update_animator(Animator a,float dt){
 		for (uint8_t l=0;l<(a->m->l+k)->bl;l++){
 			_animate_bone((a->m->l+k)->b+l,&b,i,j,t);
 		}
+		GEngine_update_model(a->m,k);
 	}
 	a->_f=i;
 	if (i>=a->a->d-1){
