@@ -16,9 +16,6 @@ cbuffer phong:register(b1){
 	float4 ac;
 	float4 dc;
 	float4 sc;
-	float4 d;
-	float4 s;
-	float df;
 	float se;
 }
 

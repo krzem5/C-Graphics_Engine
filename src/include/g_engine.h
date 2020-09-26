@@ -36,6 +36,12 @@
 #define GEngine_pos_from_camera(c) ((RawVector){(c)->x,(c)->y,(c)->z,1})
 #define GEngine_free_matrix(m) ((m)!=NULL?(free((m)),NULL):NULL)
 #define GEngine_animation_finished(a) ((a)->_c==true)
+#define GEngine_draw_model_all(m) \
+	do{ \
+		for (uint8_t __i=0;__i<m->ll;__i++){ \
+			GEngine_draw_model(m,__i); \
+		} \
+	} while (0)
 
 
 
@@ -202,9 +208,6 @@ struct _MODEL_PHONG_CB{
 	RawVector ac;
 	RawVector dc;
 	RawVector sc;
-	RawVector d;
-	RawVector s;
-	float df;
 	float se;
 };
 

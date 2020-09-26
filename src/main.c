@@ -94,6 +94,7 @@ Matrix pm;
 Camera c;
 ObjectBuffer ob;
 Model m;
+Model tm;
 Animation ia;
 Animation ftra;
 Animator an;
@@ -115,6 +116,7 @@ void init(void){
 	pm=GEngine_perspective_fov_matrix(GENGINE_PIDIV2,GEngine_aspect_ratio(),0.01f,1000);
 	ob=GEngine_box_object_buffer();
 	m=GEngine_load_model("rsrc\\ybot.mdl",1);
+	tm=GEngine_load_model("rsrc\\tree.mdl",1);
 	ia=GEngine_load_animation("rsrc\\idle.anm",m);
 	ftra=GEngine_load_animation("rsrc\\falling to roll.anm",m);
 	an=GEngine_create_animator(m);
@@ -150,12 +152,12 @@ void render(double dt){
 	GEngine_update_constant_buffer(cb,&cb1);
 	GEngine_use_vertex_shader(vs);
 	GEngine_use_pixel_shader(ps);
-	GEngine_draw_object_buffer(ob);
+	// GEngine_draw_object_buffer(ob);
 	GEngine_draw_model_bones(m,1);
 	GEngine_use_vertex_shader(vs_tex);
 	GEngine_use_pixel_shader(ps_tex);
-	GEngine_draw_model(m,0);
-	GEngine_draw_model(m,1);
+	GEngine_draw_model_all(m);
+	GEngine_draw_model_all(tm);
 	if (GEngine_is_pressed(0x1b)==true){
 		GEngine_close();
 	}

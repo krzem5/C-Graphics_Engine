@@ -58,19 +58,64 @@ LRESULT CALLBACK _msg_cb(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
 
 
 
-void _mat_mlt_4(float* nt,float* d){
-	float tx1=*nt;
-	float tx2=*(nt+1);
-	float tx3=*(nt+2);
-	float tx4=*nt*(*d)+(*(nt+1))*(*(d+1))+(*(nt+2))*(*(d+2))+(*(nt+3));
-	float ty1=*(nt+4);
-	float ty2=*(nt+5);
-	float ty3=*(nt+6);
-	float ty4=(*(nt+4))*(*d)+(*(nt+5))*(*(d+1))+(*(nt+6))*(*(d+2))+(*(nt+7));
-	float tz1=*(nt+8);
-	float tz2=*(nt+9);
-	float tz3=*(nt+10);
-	float tz4=(*(nt+8))*(*d)+(*(nt+9))*(*(d+1))+(*(nt+10))*(*(d+2))+(*(nt+11));
+void _mat_mlt_4x4(float* o,float* m){
+	float mx1=*m;
+	float mx2=*(m+1);
+	float mx3=*(m+2);
+	float mx4=*(m+3);
+	float my1=*(m+4);
+	float my2=*(m+5);
+	float my3=*(m+6);
+	float my4=*(m+7);
+	float mz1=*(m+8);
+	float mz2=*(m+9);
+	float mz3=*(m+10);
+	float mz4=*(m+11);
+	float mw1=*(m+12);
+	float mw2=*(m+13);
+	float mw3=*(m+14);
+	float mw4=*(m+15);
+	float ox1=(*o)*mx1+(*(o+1))*my1+(*(o+2))*mz1+(*(o+3))*mw1;
+	float ox2=(*o)*mx2+(*(o+1))*my2+(*(o+2))*mz2+(*(o+3))*mw2;
+	float ox3=(*o)*mx3+(*(o+1))*my3+(*(o+2))*mz3+(*(o+3))*mw3;
+	float ox4=(*o)*mx4+(*(o+1))*my4+(*(o+2))*mz4+(*(o+3))*mw4;
+	float oy1=(*(o+4))*mx1+(*(o+5))*my1+(*(o+6))*mz1+(*(o+7))*mw1;
+	float oy2=(*(o+4))*mx2+(*(o+5))*my2+(*(o+6))*mz2+(*(o+7))*mw2;
+	float oy3=(*(o+4))*mx3+(*(o+5))*my3+(*(o+6))*mz3+(*(o+7))*mw3;
+	float oy4=(*(o+4))*mx4+(*(o+5))*my4+(*(o+6))*mz4+(*(o+7))*mw4;
+	float oz1=(*(o+8))*mx1+(*(o+9))*my1+(*(o+10))*mz1+(*(o+11))*mw1;
+	float oz2=(*(o+8))*mx2+(*(o+9))*my2+(*(o+10))*mz2+(*(o+11))*mw2;
+	float oz3=(*(o+8))*mx3+(*(o+9))*my3+(*(o+10))*mz3+(*(o+11))*mw3;
+	float oz4=(*(o+8))*mx3+(*(o+9))*my3+(*(o+10))*mz3+(*(o+11))*mw4;
+	*o=ox1;
+	*(o+1)=ox2;
+	*(o+2)=ox3;
+	*(o+3)=ox4;
+	*(o+4)=oy1;
+	*(o+5)=oy2;
+	*(o+6)=oy3;
+	*(o+7)=oy4;
+	*(o+8)=oz1;
+	*(o+9)=oz2;
+	*(o+10)=oz3;
+	*(o+11)=oz4;
+}
+
+
+
+void _mat_mlt_4(float* o,float* d){
+	float tx1=*o;
+	float tx2=*(o+1);
+	float tx3=*(o+2);
+	float tx4=*o*(*d)+(*(o+1))*(*(d+1))+(*(o+2))*(*(d+2))+(*(o+3));
+	float ty1=*(o+4);
+	float ty2=*(o+5);
+	float ty3=*(o+6);
+	float ty4=(*(o+4))*(*d)+(*(o+5))*(*(d+1))+(*(o+6))*(*(d+2))+(*(o+7));
+	float tz1=*(o+8);
+	float tz2=*(o+9);
+	float tz3=*(o+10);
+	float tz4=(*(o+8))*(*d)+(*(o+9))*(*(d+1))+(*(o+10))*(*(d+2))+(*(o+11));
 	float sa=sinf(*(d+5));
 	float ca=cosf(*(d+5));
 	float sb=sinf(*(d+4));
@@ -81,18 +126,18 @@ void _mat_mlt_4(float* nt,float* d){
 	float t1=ca*sb*cc+sa*sc;
 	float t2=sa*sb*sc+ca*cc;
 	float t3=sa*sb*cc-ca*sc;
-	*nt=tx1*ca*cb+tx2*sa*cb-tx3*sb;
-	*(nt+1)=tx1*t0+tx2*t2+tx3*cb*sc;
-	*(nt+2)=tx1*t1+tx2*t3+tx3*cb*cc;
-	*(nt+3)=tx4;
-	*(nt+4)=ty1*ca*cb+ty2*sa*cb-ty3*sb;
-	*(nt+5)=ty1*t0+ty2*t2+ty3*cb*sc;
-	*(nt+6)=ty1*t1+ty2*t3+ty3*cb*cc;
-	*(nt+7)=ty4;
-	*(nt+8)=tz1*ca*cb+tz2*sa*cb-tz3*sb;
-	*(nt+9)=tz1*t0+tz2*t2+tz3*cb*sc;
-	*(nt+10)=tz1*t1+tz2*t3+tz3*cb*cc;
-	*(nt+11)=tz4;
+	*o=tx1*ca*cb+tx2*sa*cb-tx3*sb;
+	*(o+1)=tx1*t0+tx2*t2+tx3*cb*sc;
+	*(o+2)=tx1*t1+tx2*t3+tx3*cb*cc;
+	*(o+3)=tx4;
+	*(o+4)=ty1*ca*cb+ty2*sa*cb-ty3*sb;
+	*(o+5)=ty1*t0+ty2*t2+ty3*cb*sc;
+	*(o+6)=ty1*t1+ty2*t3+ty3*cb*cc;
+	*(o+7)=ty4;
+	*(o+8)=tz1*ca*cb+tz2*sa*cb-tz3*sb;
+	*(o+9)=tz1*t0+tz2*t2+tz3*cb*sc;
+	*(o+10)=tz1*t1+tz2*t3+tz3*cb*cc;
+	*(o+11)=tz4;
 }
 
 
@@ -136,7 +181,7 @@ void _mat_mlt_inv_4(float* o,float* d){
 
 
 
-void _mat_mlt_3(float* nt,float* d){
+void _mat_mlt_3(float* o,float* d){
 	float sa=sinf(*(d+5));
 	float ca=cosf(*(d+5));
 	float sb=sinf(*(d+4));
@@ -152,24 +197,24 @@ void _mat_mlt_3(float* nt,float* d){
 	float mz1=-sb;
 	float mz2=cb*sc;
 	float mz3=cb*cc;
-	float ox1=(*nt)*mx1+(*(nt+1))*my1+(*(nt+2))*mz1;
-	float ox2=(*nt)*mx2+(*(nt+1))*my2+(*(nt+2))*mz2;
-	float ox3=(*nt)*mx3+(*(nt+1))*my3+(*(nt+2))*mz3;
-	float oy1=(*(nt+3))*mx1+(*(nt+4))*my1+(*(nt+5))*mz1;
-	float oy2=(*(nt+3))*mx2+(*(nt+4))*my2+(*(nt+5))*mz2;
-	float oy3=(*(nt+3))*mx3+(*(nt+4))*my3+(*(nt+5))*mz3;
-	float oz1=(*(nt+6))*mx1+(*(nt+7))*my1+(*(nt+8))*mz1;
-	float oz2=(*(nt+6))*mx2+(*(nt+7))*my2+(*(nt+8))*mz2;
-	float oz3=(*(nt+6))*mx3+(*(nt+7))*my3+(*(nt+8))*mz3;
-	*nt=ox1;
-	*(nt+1)=ox2;
-	*(nt+2)=ox3;
-	*(nt+3)=oy1;
-	*(nt+4)=oy2;
-	*(nt+5)=oy3;
-	*(nt+6)=oz1;
-	*(nt+7)=oz2;
-	*(nt+8)=oz3;
+	float ox1=(*o)*mx1+(*(o+1))*my1+(*(o+2))*mz1;
+	float ox2=(*o)*mx2+(*(o+1))*my2+(*(o+2))*mz2;
+	float ox3=(*o)*mx3+(*(o+1))*my3+(*(o+2))*mz3;
+	float oy1=(*(o+3))*mx1+(*(o+4))*my1+(*(o+5))*mz1;
+	float oy2=(*(o+3))*mx2+(*(o+4))*my2+(*(o+5))*mz2;
+	float oy3=(*(o+3))*mx3+(*(o+4))*my3+(*(o+5))*mz3;
+	float oz1=(*(o+6))*mx1+(*(o+7))*my1+(*(o+8))*mz1;
+	float oz2=(*(o+6))*mx2+(*(o+7))*my2+(*(o+8))*mz2;
+	float oz3=(*(o+6))*mx3+(*(o+7))*my3+(*(o+8))*mz3;
+	*o=ox1;
+	*(o+1)=ox2;
+	*(o+2)=ox3;
+	*(o+3)=oy1;
+	*(o+4)=oy2;
+	*(o+5)=oy3;
+	*(o+6)=oz1;
+	*(o+7)=oz2;
+	*(o+8)=oz3;
 }
 
 
@@ -221,10 +266,10 @@ struct _MODEL_BONE _load_model_bone(FILE* f){
 	assert(fread_s((void*)o.nm,o.nml*sizeof(char),1,o.nml*sizeof(char),f)==o.nml*sizeof(char));
 	*(o.nm+o.nml)=0;
 	assert(fread_s((void*)(&o.l),sizeof(float),1,sizeof(float),f)==sizeof(float));
-	o.l=o.l;
 	o.cl=(uint8_t)getc(f);
 	o.dt=malloc(6*sizeof(float));
 	o.t=malloc(6*sizeof(float));
+	printf("%s\n",o.nm);
 	assert(fread_s((void*)o.dt,6*sizeof(float),1,6*sizeof(float),f)==6*sizeof(float));
 	for (uint8_t i=0;i<6;i++){
 		*(o.dt+i)=*(o.dt+i)*(i>=3?GENGINE_PIDIV180:1);
@@ -235,10 +280,6 @@ struct _MODEL_BONE _load_model_bone(FILE* f){
 	o.wl=malloc(o.wil*sizeof(float));
 	assert(fread_s((void*)o.il,o.wil*sizeof(uint16_t),1,o.wil*sizeof(uint16_t),f)==o.wil*sizeof(uint16_t));
 	assert(fread_s((void*)o.wl,o.wil*sizeof(float),1,o.wil*sizeof(float),f)==o.wil*sizeof(float));
-	for (uint32_t i=0;i<o.wil;i++){
-		*(o.il+i)=*(o.il+i);
-		*(o.wl+i)=*(o.wl+i);
-	}
 	o.c=malloc(o.cl*sizeof(struct _MODEL_BONE));
 	for (uint8_t i=0;i<o.cl;i++){
 		*(o.c+i)=_load_model_bone(f);
@@ -295,74 +336,50 @@ void _load_animation_bone(FILE* f,Animation a,Model m){
 	if (((a->b+i)->f&_ANIMATION_BONE_FLAG_X)!=0){
 		(a->b+i)->x.l=malloc(a->d*sizeof(float));
 		assert(fread_s((void*)(a->b+i)->x.l,a->d*sizeof(float),1,a->d*sizeof(float),f)==a->d*sizeof(float));
-		for (uint16_t j=0;j<a->d;j++){
-			*((a->b+i)->x.l+j)=*((a->b+i)->x.l+j);
-		}
 	}
 	else{
 		(a->b+i)->x.v=0;
 		assert(fread_s((void*)&(a->b+i)->x.v,sizeof(float),1,sizeof(float),f)==sizeof(float));
-		(a->b+i)->x.v=(a->b+i)->x.v;
 	}
 	if (((a->b+i)->f&_ANIMATION_BONE_FLAG_Y)!=0){
 		(a->b+i)->y.l=malloc(a->d*sizeof(float));
 		assert(fread_s((void*)(a->b+i)->y.l,a->d*sizeof(float),1,a->d*sizeof(float),f)==a->d*sizeof(float));
-		for (uint16_t j=0;j<a->d;j++){
-			*((a->b+i)->y.l+j)=*((a->b+i)->y.l+j);
-		}
 	}
 	else{
 		(a->b+i)->y.v=0;
 		assert(fread_s((void*)&(a->b+i)->y.v,sizeof(float),1,sizeof(float),f)==sizeof(float));
-		(a->b+i)->y.v=(a->b+i)->y.v;
 	}
 	if (((a->b+i)->f&_ANIMATION_BONE_FLAG_Z)!=0){
 		(a->b+i)->z.l=malloc(a->d*sizeof(float));
 		assert(fread_s((void*)(a->b+i)->z.l,a->d*sizeof(float),1,a->d*sizeof(float),f)==a->d*sizeof(float));
-		for (uint16_t j=0;j<a->d;j++){
-			*((a->b+i)->z.l+j)=*((a->b+i)->z.l+j);
-		}
 	}
 	else{
 		(a->b+i)->z.v=0;
 		assert(fread_s((void*)&(a->b+i)->z.v,sizeof(float),1,sizeof(float),f)==sizeof(float));
-		(a->b+i)->z.v=(a->b+i)->z.v;
 	}
 	if (((a->b+i)->f&_ANIMATION_BONE_FLAG_RX)!=0){
 		(a->b+i)->rx.l=malloc(a->d*sizeof(float));
 		assert(fread_s((void*)(a->b+i)->rx.l,a->d*sizeof(float),1,a->d*sizeof(float),f)==a->d*sizeof(float));
-		for (uint16_t j=0;j<a->d;j++){
-			*((a->b+i)->rx.l+j)=*((a->b+i)->rx.l+j);
-		}
 	}
 	else{
 		(a->b+i)->rx.v=0;
 		assert(fread_s((void*)&(a->b+i)->rx.v,sizeof(float),1,sizeof(float),f)==sizeof(float));
-		(a->b+i)->rx.v=(a->b+i)->rx.v;
 	}
 	if (((a->b+i)->f&_ANIMATION_BONE_FLAG_RY)!=0){
 		(a->b+i)->ry.l=malloc(a->d*sizeof(float));
 		assert(fread_s((void*)(a->b+i)->ry.l,a->d*sizeof(float),1,a->d*sizeof(float),f)==a->d*sizeof(float));
-		for (uint16_t j=0;j<a->d;j++){
-			*((a->b+i)->ry.l+j)=*((a->b+i)->ry.l+j);
-		}
 	}
 	else{
 		(a->b+i)->ry.v=0;
 		assert(fread_s((void*)&(a->b+i)->ry.v,sizeof(float),1,sizeof(float),f)==sizeof(float));
-		(a->b+i)->ry.v=(a->b+i)->ry.v;
 	}
 	if (((a->b+i)->f&_ANIMATION_BONE_FLAG_RZ)!=0){
 		(a->b+i)->rz.l=malloc(a->d*sizeof(float));
 		assert(fread_s((void*)(a->b+i)->rz.l,a->d*sizeof(float),1,a->d*sizeof(float),f)==a->d*sizeof(float));
-		for (uint16_t j=0;j<a->d;j++){
-			*((a->b+i)->rz.l+j)=*((a->b+i)->rz.l+j);
-		}
 	}
 	else{
 		(a->b+i)->rz.v=0;
 		assert(fread_s((void*)&(a->b+i)->rz.v,sizeof(float),1,sizeof(float),f)==sizeof(float));
-		(a->b+i)->rz.v=(a->b+i)->rz.v;
 	}
 	for (uint8_t j=0;j<c;j++){
 		_load_animation_bone(f,a,m);
@@ -461,6 +478,9 @@ void _deform_skin(struct _MODEL_BONE* b,float* t,float* it,float* r,float* ir,fl
 	_mat_mlt_inv_4(nit,b->dt);
 	_mat_mlt_3(nr,b->t);
 	_mat_mlt_inv_3(nir,b->dt);
+	for (uint8_t i=0;i<b->cl;i++){
+		_deform_skin(b->c+i,nt,nit,nr,nir,stl,dtl);
+	}
 	for (uint32_t i=0;i<b->wil;i++){
 		float tx=*(stl+*(b->il+i)*8);
 		float ty=*(stl+*(b->il+i)*8+1);
@@ -480,9 +500,6 @@ void _deform_skin(struct _MODEL_BONE* b,float* t,float* it,float* r,float* ir,fl
 		*(dtl+*(b->il+i)*8+3)=(*nr)*tx2+(*(nr+1))*ty2+(*(nr+2))*tz;
 		*(dtl+*(b->il+i)*8+4)=(*(nr+3))*tx2+(*(nr+4))*ty2+(*(nr+5))*tz;
 		*(dtl+*(b->il+i)*8+5)=(*(nr+6))*tx2+(*(nr+7))*ty2+(*(nr+8))*tz;
-	}
-	for (uint8_t i=0;i<b->cl;i++){
-		_deform_skin(b->c+i,nt,nit,nr,nir,stl,dtl);
 	}
 	free(nt);
 	free(nit);
@@ -746,11 +763,8 @@ Model GEngine_load_model(const char* fp,uint8_t sl){
 		(o->l+i)->dtl=malloc((o->l+i)->dtll*sizeof(float)*8);
 		(o->l+i)->il=malloc((o->l+i)->ill*sizeof(uint16_t));
 		(o->l+i)->m_cb=GEngine_create_constant_buffer(sizeof(struct _MODEL_PHONG_CB));
-		float* cb_b=malloc(17*sizeof(float));
-		assert(fread_s((void*)cb_b,17*sizeof(float),1,17*sizeof(float),f)==17*sizeof(float));
-		for (uint8_t j=0;j<17;j++){
-			*(cb_b+j)=*(cb_b+j);
-		}
+		float* cb_b=malloc(10*sizeof(float));
+		assert(fread_s((void*)cb_b,10*sizeof(float),1,10*sizeof(float),f)==10*sizeof(float));
 		struct _MODEL_PHONG_CB cb;
 		cb.ac.x=*cb_b;
 		cb.ac.y=*(cb_b+1);
@@ -764,26 +778,11 @@ Model GEngine_load_model(const char* fp,uint8_t sl){
 		cb.sc.y=*(cb_b+7);
 		cb.sc.z=*(cb_b+8);
 		cb.sc.w=0;
-		cb.df=*(cb_b+9);
-		cb.se=*(cb_b+10);
-		cb.d.x=*(cb_b+11);
-		cb.d.y=*(cb_b+12);
-		cb.d.z=*(cb_b+13);
-		cb.d.w=0;
-		cb.s.x=*(cb_b+14);
-		cb.s.y=*(cb_b+15);
-		cb.s.z=*(cb_b+16);
-		cb.s.w=0;
+		cb.se=*(cb_b+9);
 		GEngine_update_constant_buffer((o->l+i)->m_cb,&cb);
 		free(cb_b);
 		assert(fread_s((void*)(o->l+i)->dtl,(o->l+i)->dtll*sizeof(float)*8,1,(o->l+i)->dtll*sizeof(float)*8,f)==(o->l+i)->dtll*sizeof(float)*8);
 		assert(fread_s((void*)(o->l+i)->il,(o->l+i)->ill*sizeof(uint16_t),1,(o->l+i)->ill*sizeof(uint16_t),f)==(o->l+i)->ill*sizeof(uint16_t));
-		for (uint32_t j=0;j<(o->l+i)->dtll*8;j++){
-			*((o->l+i)->dtl+j)=*((o->l+i)->dtl+j);
-		}
-		for (uint32_t j=0;j<(o->l+i)->ill;j++){
-			*((o->l+i)->il+j)=*((o->l+i)->il+j);
-		}
 		for (uint8_t j=0;j<(o->l+i)->bl;j++){
 			*((o->l+i)->b+j)=_load_model_bone(f);
 		}
