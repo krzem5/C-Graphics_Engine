@@ -86,5 +86,6 @@ float4 pixel_shader_tex(float4 p:SV_POSITION,float4 wp:POSITION,float3 n:NORMAL,
 	// float4 df_c=saturate(dot((lp-wp).xyz,n)*df);
 	// return saturate(ac+df_c);
 	/////
-	return saturate(ac+dc*saturate(dot(n,-normalize(lp-wp).xyz)));
+	float3 ld=normalize(lp-wp).xyz;
+	return saturate(ac+dc*(saturate(dot(n,-ld))*0.9+0.1));
 }

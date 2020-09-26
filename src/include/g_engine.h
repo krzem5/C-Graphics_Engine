@@ -161,10 +161,8 @@ struct _MODEL_BONE{
 	uint8_t nml;
 	char* nm;
 	float l;
-	float* d;
-	float* __d;
-	float* tm;
 	float* dt;
+	float* t;
 	uint32_t wil;
 	uint16_t* il;
 	float* wl;
