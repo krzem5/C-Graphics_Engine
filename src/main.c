@@ -153,7 +153,7 @@ void render(double dt){
 	GEngine_use_vertex_shader(vs);
 	GEngine_use_pixel_shader(ps);
 	// GEngine_draw_object_buffer(ob);
-	// GEngine_draw_model_bones(m,1);
+	GEngine_draw_model_bones(m,1);
 	GEngine_use_vertex_shader(vs_tex);
 	GEngine_use_pixel_shader(ps_tex);
 	GEngine_draw_model_all(m);
