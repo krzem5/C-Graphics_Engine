@@ -269,7 +269,6 @@ struct _MODEL_BONE _load_model_bone(FILE* f){
 	o.cl=(uint8_t)getc(f);
 	o.dt=malloc(6*sizeof(float));
 	o.t=malloc(6*sizeof(float));
-	printf("%s\n",o.nm);
 	assert(fread_s((void*)o.dt,6*sizeof(float),1,6*sizeof(float),f)==6*sizeof(float));
 	for (uint8_t i=0;i<6;i++){
 		*(o.dt+i)=*(o.dt+i)*(i>=3?GENGINE_PIDIV180:1);
@@ -488,18 +487,18 @@ void _deform_skin(struct _MODEL_BONE* b,float* t,float* it,float* r,float* ir,fl
 		float tx2=(*nit)*tx+(*(nit+1))*ty+(*(nit+2))*tz+(*(nit+3));
 		float ty2=(*(nit+4))*tx+(*(nit+5))*ty+(*(nit+6))*tz+(*(nit+7));
 		tz=(*(nit+8))*tx+(*(nit+9))*ty+(*(nit+10))*tz+(*(nit+11));
-		*(dtl+*(b->il+i)*8)=(*nt)*tx2+(*(nt+1))*ty2+(*(nt+2))*tz+(*(nt+3));
-		*(dtl+*(b->il+i)*8+1)=(*(nt+4))*tx2+(*(nt+5))*ty2+(*(nt+6))*tz+(*(nt+7));
-		*(dtl+*(b->il+i)*8+2)=(*(nt+8))*tx2+(*(nt+9))*ty2+(*(nt+10))*tz+(*(nt+11));
+		*(dtl+*(b->il+i)*8)+=((*nt)*tx2+(*(nt+1))*ty2+(*(nt+2))*tz+(*(nt+3)))*(*(b->wl+i));
+		*(dtl+*(b->il+i)*8+1)+=((*(nt+4))*tx2+(*(nt+5))*ty2+(*(nt+6))*tz+(*(nt+7)))*(*(b->wl+i));
+		*(dtl+*(b->il+i)*8+2)+=((*(nt+8))*tx2+(*(nt+9))*ty2+(*(nt+10))*tz+(*(nt+11)))*(*(b->wl+i));
 		tx=*(stl+*(b->il+i)*8+3);
 		ty=*(stl+*(b->il+i)*8+4);
 		tz=*(stl+*(b->il+i)*8+5);
 		tx2=(*nir)*tx+(*(nir+1))*ty+(*(nir+2))*tz;
 		ty2=(*(nir+3))*tx+(*(nir+4))*ty+(*(nir+5))*tz;
 		tz=(*(nir+6))*tx+(*(nir+7))*ty+(*(nir+8))*tz;
-		*(dtl+*(b->il+i)*8+3)=(*nr)*tx2+(*(nr+1))*ty2+(*(nr+2))*tz;
-		*(dtl+*(b->il+i)*8+4)=(*(nr+3))*tx2+(*(nr+4))*ty2+(*(nr+5))*tz;
-		*(dtl+*(b->il+i)*8+5)=(*(nr+6))*tx2+(*(nr+7))*ty2+(*(nr+8))*tz;
+		*(dtl+*(b->il+i)*8+3)+=((*nr)*tx2+(*(nr+1))*ty2+(*(nr+2))*tz)*(*(b->wl+i));
+		*(dtl+*(b->il+i)*8+4)+=((*(nr+3))*tx2+(*(nr+4))*ty2+(*(nr+5))*tz)*(*(b->wl+i));
+		*(dtl+*(b->il+i)*8+5)+=((*(nr+6))*tx2+(*(nr+7))*ty2+(*(nr+8))*tz)*(*(b->wl+i));
 	}
 	free(nt);
 	free(nit);

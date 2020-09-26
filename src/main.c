@@ -147,13 +147,13 @@ void render(double dt){
 		GEngine_as_raw_matrix(cm),
 		GEngine_as_raw_matrix(pm),
 		GEngine_pos_from_camera(c),
-		GEngine_raw_vector(-1000,-1000,-1000,1)
+		GEngine_raw_vector(1000,-1000,-1000,1)
 	};
 	GEngine_update_constant_buffer(cb,&cb1);
 	GEngine_use_vertex_shader(vs);
 	GEngine_use_pixel_shader(ps);
 	// GEngine_draw_object_buffer(ob);
-	GEngine_draw_model_bones(m,1);
+	// GEngine_draw_model_bones(m,1);
 	GEngine_use_vertex_shader(vs_tex);
 	GEngine_use_pixel_shader(ps_tex);
 	GEngine_draw_model_all(m);
