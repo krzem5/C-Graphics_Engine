@@ -67,7 +67,7 @@ VS_INPUT_LAYOUT vs_inp_tex[]={
 		0,
 		24,
 		D3D11_INPUT_PER_VERTEX_DATA,
-		// 0
+		0
 	}
 };
 
