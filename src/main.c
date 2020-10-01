@@ -1,10 +1,7 @@
 #include <g_engine.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <phong_vertex.h>
-#include <phong_pixel.h>
-#include <phong_vertex_tex.h>
-#include <phong_pixel_tex.h>
+#include <_data.h>
 
 
 
